@@ -18,7 +18,7 @@ The site should feel welcoming, accessible to all ages, and dead simple to use.
 
 ## Project Context
 
-**Stack:** Next.js 14 (App Router) + Clerk Auth + Convex + Vercel Postgres + Tailwind CSS + NextUI
+**Stack:** Next.js 14 (App Router) + Clerk Auth + Convex (real-time DB) + Tailwind CSS + NextUI + Framer Motion
 **Repo:** https://github.com/spragginsdesigns/bluffstuff
 **Deployed:** https://bluffstuff.vercel.app/
 **Year:** 2026
@@ -30,32 +30,52 @@ The site should feel welcoming, accessible to all ages, and dead simple to use.
 | BluffStuff | Woodward Bluffs Mobile Home Park Activities Committee website | Root |
 | Committee | Admin users who manage events (role: "committee") | `convex/schema.ts` |
 | Resident | Regular community members (role: "resident") | `convex/schema.ts` |
-| RSVP | Event attendance registration | `app/api/rsvp/` |
+| RSVP | Event attendance registration (stored in Convex) | `convex/rsvps.ts` |
 | Attendee | Person registered for an event | `types/Event.ts` |
+| UserSync | Auto-syncs Clerk auth users to Convex database on sign-in | `app/components/UserSync.tsx` |
+| Seed | Admin-only page to initialize/upgrade committee role | `app/admin/seed/page.tsx` |
 
 ## Project Structure
 
 ```
 bluffstuff/
 ├── app/                    # Next.js App Router pages & components
-│   ├── api/                # API routes (rsvp, getRSVPs, sendReminders)
-│   ├── components/         # React components (NavBar, EventCard, Hero, etc.)
-│   ├── providers/          # ConvexClientProvider
-│   ├── utils/              # Calendar, event utilities
+│   ├── api/                # API routes (rsvp, sendReminders)
+│   ├── components/         # React components
+│   │   ├── NavBar.tsx      # Top navigation with scroll-to-section links
+│   │   ├── Hero.tsx        # Landing hero section
+│   │   ├── EventCard.tsx   # Event display card (accepts ConvexEvent)
+│   │   ├── EventFormModal.tsx  # Committee event creation/edit form
+│   │   ├── MonthlyCalendar.tsx # Monthly calendar with event indicators
+│   │   ├── RsvpModal.tsx   # RSVP form (Convex-backed, auto-fills from Clerk)
+│   │   ├── AttendeesList.tsx   # Real-time attendee list per event
+│   │   ├── CommitteeDashboard.tsx # 3-tab admin panel (Events, Messages, Members)
+│   │   ├── ContactForm.tsx # Contact form (Convex-backed)
+│   │   ├── UserSync.tsx    # Clerk → Convex user sync (runs in layout)
+│   │   ├── FAQ.tsx         # Community FAQ
+│   │   ├── Footer.tsx      # Site footer
+│   │   └── Amenities.tsx   # Park amenities section
+│   ├── hooks/
+│   │   └── useIsCommittee.ts  # Role check hook (Clerk + Convex)
+│   ├── providers/          # ConvexClientProvider, Clerk provider
+│   ├── utils/calendar.ts   # Calendar date utilities
 │   ├── sign-in/            # Clerk sign-in page
 │   ├── sign-up/            # Clerk sign-up page
-│   ├── admin/seed/         # Admin seed page
-│   ├── layout.tsx          # Root layout (Clerk + Convex + NextUI providers)
-│   └── page.tsx            # Home page
-├── convex/                 # Convex backend (schema, users, seed)
-├── data/                   # Static data files
-├── interfaces/             # TypeScript interfaces
-├── pages/                  # Next.js Pages Router (legacy/mixed)
-├── public/                 # Static assets
-├── types/                  # Shared type definitions (Event, Attendee)
+│   ├── admin/seed/         # Admin seed page (committee role initialization)
+│   ├── layout.tsx          # Root layout (Convex + Clerk + NextUI + UserSync)
+│   └── page.tsx            # Home page (single-page with scroll sections)
+├── convex/                 # Convex backend
+│   ├── schema.ts           # Database schema (users, events, rsvps, contactMessages)
+│   ├── users.ts            # User queries + upsert mutation (role is server-side only)
+│   ├── events.ts           # Event CRUD (committee-only writes)
+│   ├── rsvps.ts            # RSVP queries + mutations
+│   ├── contactMessages.ts  # Contact form storage + committee-only list
+│   └── seed.ts             # Admin role initialization mutation
+├── public/                 # Static assets (logo, favicons)
+├── types/Event.ts          # ConvexEvent, ConvexRsvp, legacy types
 ├── middleware.ts           # Clerk auth middleware
 ├── tailwind.config.ts      # Tailwind configuration
-└── next.config.mjs         # Next.js config (Vercel Postgres env)
+└── next.config.mjs         # Next.js config
 ```
 
 ## Development Commands
@@ -164,14 +184,25 @@ Never assume changes work. After ANY change:
 
 ## Project-Specific Rules
 
-- Auth is handled by Clerk - use `@clerk/nextjs` hooks and components
-- State management uses Convex - mutations/queries go in `convex/` directory
-- Database: Convex for user data, Vercel Postgres for RSVPs
-- UI framework is NextUI (`@nextui-org/react`) with Tailwind CSS
-- Public routes: `/`, `/sign-in`, `/sign-up`, `/api/uploadthing` (see `middleware.ts`)
-- All other routes require authentication via Clerk middleware
-- File uploads via UploadThing
-- Email via SendGrid (`@sendgrid/mail`) and Nodemailer
+### Auth & Data Flow
+- **Auth:** Clerk (`@clerk/nextjs`) — Google SSO sign-in, hooks: `useUser`, `SignInButton`, etc.
+- **Database:** Convex for ALL data (users, events, RSVPs, contact messages) — no Vercel Postgres
+- **User sync:** `UserSync` component in root layout auto-creates/updates Convex user records on Clerk sign-in
+- **Role management:** Server-side only — `upsertUser` never accepts `role` from client; new users default to "resident"
+- **Committee access:** Use `useIsCommittee()` hook (checks Clerk user email against Convex role)
+- **Admin bootstrap:** Visit `/admin/seed` to initialize admin with "committee" role (hardcoded to `atmosphere9999@gmail.com`)
+
+### UI & Styling
+- UI framework: NextUI (`@nextui-org/react`) + Tailwind CSS + Framer Motion animations
+- Dark-first design: primary bg `bg-[#131111]`, glassmorphism cards, gradient accents
+- Mobile-first responsive: all components must work beautifully on phones
+- Modern aesthetic: inspired by shadcn/ui, Aceternity UI, Magic UI
+- Single-page layout with smooth scroll-to-section navigation
+
+### Routes & Middleware
+- Public routes: `/`, `/sign-in`, `/sign-up` (see `middleware.ts`)
+- All other routes require Clerk authentication
+- Home page uses anchor sections: `#events`, `#calendar`, `#committee`, `#resources`, `#faq`, `#contact`
 
 ## Key Files
 
@@ -179,18 +210,31 @@ Never assume changes work. After ANY change:
 |---------|------|
 | Main entry / Home | `app/page.tsx` |
 | Root layout | `app/layout.tsx` |
-| API routes | `app/api/` |
 | Auth middleware | `middleware.ts` |
 | Convex schema | `convex/schema.ts` |
+| Event CRUD | `convex/events.ts` |
+| RSVP mutations/queries | `convex/rsvps.ts` |
+| Contact messages | `convex/contactMessages.ts` |
+| User sync (Clerk → Convex) | `app/components/UserSync.tsx` |
+| Committee role hook | `app/hooks/useIsCommittee.ts` |
+| Admin seed page | `app/admin/seed/page.tsx` |
 | Type definitions | `types/Event.ts` |
 | Next.js config | `next.config.mjs` |
 | Tailwind config | `tailwind.config.ts` |
 
+## Convex Tables
+
+| Table | Purpose | Key Indexes |
+|-------|---------|-------------|
+| `users` | Clerk-synced user records with roles | `by_email` |
+| `events` | Community events (CRUD by committee) | `by_date`, `by_active` |
+| `rsvps` | Event attendance registrations | `by_event`, `by_email` |
+| `contactMessages` | Contact form submissions | — |
+
 ## Environment Variables
 
 Required (never hardcode these):
-- `POSTGRES_URL` - Vercel Postgres connection
 - Clerk keys (managed by `@clerk/nextjs`)
-- Convex deployment URL
-- SendGrid / Nodemailer credentials
-- UploadThing keys
+- `CONVEX_DEPLOYMENT` — Convex project deployment URL
+- `NEXT_PUBLIC_CONVEX_URL` — Convex client URL
+- SendGrid / Nodemailer credentials (for email reminders)

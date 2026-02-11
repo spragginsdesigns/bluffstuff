@@ -23,13 +23,14 @@ export const getCommitteeMembers = query({
 	}
 });
 
-// Create or update user
+// Create or update user from Clerk sign-in
+// Role is NOT accepted from client — new users default to "resident",
+// existing users keep their current role.
 export const upsertUser = mutation({
 	args: {
 		email: v.string(),
 		name: v.string(),
-		imageUrl: v.optional(v.string()),
-		role: v.string()
+		imageUrl: v.optional(v.string())
 	},
 	handler: async (ctx, args) => {
 		const existing = await ctx.db
@@ -46,7 +47,10 @@ export const upsertUser = mutation({
 		}
 
 		return await ctx.db.insert("users", {
-			...args,
+			email: args.email,
+			name: args.name,
+			imageUrl: args.imageUrl,
+			role: "resident",
 			createdAt: Date.now(),
 			lastLoginAt: Date.now()
 		});

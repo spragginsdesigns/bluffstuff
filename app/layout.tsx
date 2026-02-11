@@ -1,9 +1,8 @@
-import Link from "next/link";
 import "./globals.css";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
+import UserSync from "./components/UserSync";
 import { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Providers } from "./providers";
 import { ConvexClientProvider } from "./providers/ConvexClientProdiver";
 
@@ -82,6 +81,7 @@ export default function RootLayout({
 			<body className="flex flex-col min-h-screen bg-[#131111] text-white">
 				<ConvexClientProvider>
 					<Providers>
+						<UserSync />
 						<header className="fixed w-full top-0 z-50">
 							<NavBar />
 						</header>
