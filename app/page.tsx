@@ -217,7 +217,21 @@ export default function Home() {
 												d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
 											/>
 										</svg>
-									)
+									),
+									links: [
+										{
+											label: "Your Rights as a Resident",
+											url: "https://www.hcd.ca.gov/mmh/mac/your-rights-mobilehome-park-resident"
+										},
+										{
+											label: "2026 CA Mobilehome Residency Law",
+											url: "https://mhphoa.com/mrl/"
+										},
+										{
+											label: "City of Fresno Mobilehome Parks",
+											url: "https://www.fresno.gov/cityattorney/mobilehome-parks/"
+										}
+									]
 								},
 								{
 									title: "Community Guidelines",
@@ -276,6 +290,25 @@ export default function Home() {
 									<p className="text-gray-400 text-sm">
 										{resource.description}
 									</p>
+									{"links" in resource &&
+										(resource as { links: { label: string; url: string }[] }).links && (
+											<ul className="mt-3 space-y-1.5">
+												{(resource as { links: { label: string; url: string }[] }).links.map(
+													(link, linkIndex) => (
+														<li key={linkIndex}>
+															<a
+																href={link.url}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
+															>
+																{link.label} &rarr;
+															</a>
+														</li>
+													)
+												)}
+											</ul>
+										)}
 								</motion.div>
 							))}
 						</div>
