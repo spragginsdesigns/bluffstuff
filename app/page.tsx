@@ -15,7 +15,9 @@ import { useIsCommittee } from "./hooks/useIsCommittee";
 
 export default function Home() {
 	const { isCommittee, isLoaded } = useIsCommittee();
-	const upcomingEvents = useQuery(api.events.listUpcoming);
+	const upcomingEventsRaw = useQuery(api.events.listUpcoming);
+	// Treat undefined (still loading / connection issue) as empty so the page doesn't spin forever
+	const upcomingEvents = upcomingEventsRaw ?? [];
 	const [selectedEvent, setSelectedEvent] = useState<ConvexEvent | null>(null);
 
 	if (!isLoaded) {
@@ -48,11 +50,7 @@ export default function Home() {
 						Upcoming Events
 					</h2>
 
-					{upcomingEvents === undefined ? (
-						<div className="flex justify-center py-12">
-							<div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-						</div>
-					) : upcomingEvents.length === 0 ? (
+					{upcomingEvents.length === 0 ? (
 						<div className="text-center py-12">
 							<div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
 								<svg
@@ -98,17 +96,15 @@ export default function Home() {
 						<h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
 							Event Calendar
 						</h2>
-						{upcomingEvents !== undefined && (
-							<MonthlyCalendar
-								events={upcomingEvents as ConvexEvent[]}
-								onEventClick={(event) => {
-									setSelectedEvent(event);
-									document
-										.getElementById("events")
-										?.scrollIntoView({ behavior: "smooth" });
-								}}
-							/>
-						)}
+						<MonthlyCalendar
+						events={upcomingEvents as ConvexEvent[]}
+						onEventClick={(event) => {
+							setSelectedEvent(event);
+							document
+								.getElementById("events")
+								?.scrollIntoView({ behavior: "smooth" });
+						}}
+					/>
 					</div>
 				</section>
 
