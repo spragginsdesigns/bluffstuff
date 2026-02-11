@@ -68,8 +68,8 @@ export default function Hero() {
 						<div className="absolute inset-0 bg-gradient-to-r from-purple-500/30 to-pink-600/30 rounded-full blur-2xl animate-pulse" />
 						<div className="relative w-full h-full rounded-full overflow-hidden border-2 border-white/10 shadow-2xl shadow-purple-500/10">
 							<Image
-								src="/images/wwb-heroimage.jpg"
-								alt="Scenic view of Woodward Bluffs"
+								src="/logo.png"
+								alt="Woodward Bluffs Activities Committee Logo"
 								fill
 								style={{ objectFit: "cover" }}
 								priority
