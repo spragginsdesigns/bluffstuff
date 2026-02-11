@@ -2,25 +2,22 @@
 
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useState } from "react";
+import { useIsCommittee } from "@/app/hooks/useIsCommittee";
 import { useRouter } from "next/navigation";
 
 export default function SeedPage() {
 	const seedUsers = useMutation(api.seed.seedUsers);
 	const [status, setStatus] = useState<string>("");
-	const { user, isLoaded } = useUser();
+	const { isCommittee, isLoaded } = useIsCommittee();
 	const router = useRouter();
 
-	useEffect(() => {
-		if (
-			isLoaded &&
-			(!user ||
-				user.primaryEmailAddress?.emailAddress !== "atmosphere9999@gmail.com")
-		) {
-			router.push("/");
-		}
-	}, [isLoaded, user, router]);
+	if (!isLoaded) return null;
+
+	if (!isCommittee) {
+		router.push("/");
+		return null;
+	}
 
 	const handleSeed = async () => {
 		try {
@@ -35,15 +32,6 @@ export default function SeedPage() {
 			);
 		}
 	};
-
-	// Only show page content to authorized admin
-	if (
-		!isLoaded ||
-		!user ||
-		user.primaryEmailAddress?.emailAddress !== "atmosphere9999@gmail.com"
-	) {
-		return null;
-	}
 
 	return (
 		<div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">

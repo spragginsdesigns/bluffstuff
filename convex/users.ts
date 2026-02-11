@@ -12,6 +12,17 @@ export const getUser = query({
 	}
 });
 
+// Get all committee members
+export const getCommitteeMembers = query({
+	args: {},
+	handler: async (ctx) => {
+		return await ctx.db
+			.query("users")
+			.filter((q) => q.eq(q.field("role"), "committee"))
+			.collect();
+	}
+});
+
 // Create or update user
 export const upsertUser = mutation({
 	args: {

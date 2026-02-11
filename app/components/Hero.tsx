@@ -1,38 +1,72 @@
-// app/components/Hero.tsx
 "use client";
+
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 export default function Hero() {
+	const scrollTo = (id: string) => {
+		document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+	};
+
 	return (
-		<section className="relative w-full overflow-hidden pt-24 pb-16 md:py-24">
-			<div className="container mx-auto px-4 h-full flex flex-col lg:flex-row items-center justify-center">
+		<section className="relative w-full overflow-hidden pt-20 pb-12 md:pt-24 md:pb-16">
+			{/* Subtle background gradient orbs */}
+			<div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
+			<div className="absolute bottom-10 right-10 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl" />
+
+			<div className="container mx-auto px-4 h-full flex flex-col lg:flex-row items-center justify-center relative z-10">
 				{/* Left Column */}
 				<div className="w-full lg:w-1/2 text-center lg:text-left mb-10 lg:mb-0">
-					<h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+					<motion.h1
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.6 }}
+						className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"
+					>
 						Welcome to Bluff Stuff
-					</h1>
-					<p className="text-lg md:text-xl lg:text-2xl mb-10 text-white max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-						Your gateway to the vibrant
-						<span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-							{" "}
+					</motion.h1>
+					<motion.p
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.6, delay: 0.1 }}
+						className="text-lg md:text-xl lg:text-2xl mb-10 text-gray-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+					>
+						Your gateway to the vibrant{" "}
+						<span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 font-semibold">
 							Woodward Bluffs community
 						</span>
-					</p>
-					<div className="space-y-4 sm:space-y-0 sm:space-x-4">
-						<button className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-full text-lg transition duration-300 ease-in-out transform hover:scale-105">
-							Explore
+					</motion.p>
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.6, delay: 0.2 }}
+						className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+					>
+						<button
+							onClick={() => scrollTo("events")}
+							className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-xl text-lg transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25"
+						>
+							See What&apos;s Happening
 						</button>
-						<button className="bg-transparent border-2 border-white text-white font-bold py-3 px-6 rounded-full text-lg hover:bg-white hover:text-gray-900 transition duration-300 ease-in-out transform hover:scale-105">
+						<button
+							onClick={() => scrollTo("faq")}
+							className="bg-white/5 backdrop-blur-sm border border-white/10 text-white font-bold py-3 px-8 rounded-xl text-lg hover:bg-white/10 transition-all duration-300"
+						>
 							Learn More
 						</button>
-					</div>
+					</motion.div>
 				</div>
 
 				{/* Right Column */}
-				<div className="w-full lg:w-1/2 flex justify-center items-center">
+				<motion.div
+					initial={{ opacity: 0, scale: 0.9 }}
+					animate={{ opacity: 1, scale: 1 }}
+					transition={{ duration: 0.7, delay: 0.2 }}
+					className="w-full lg:w-1/2 flex justify-center items-center"
+				>
 					<div className="relative w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96">
-						<div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-600 rounded-full blur-xl opacity-50 animate-pulse"></div>
-						<div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white shadow-2xl">
+						<div className="absolute inset-0 bg-gradient-to-r from-purple-500/30 to-pink-600/30 rounded-full blur-2xl animate-pulse" />
+						<div className="relative w-full h-full rounded-full overflow-hidden border-2 border-white/10 shadow-2xl shadow-purple-500/10">
 							<Image
 								src="/images/wwb-heroimage.jpg"
 								alt="Scenic view of Woodward Bluffs"
@@ -43,7 +77,7 @@ export default function Hero() {
 							/>
 						</div>
 					</div>
-				</div>
+				</motion.div>
 			</div>
 		</section>
 	);
