@@ -13,12 +13,15 @@ import { ConvexEvent } from "../types/Event";
 import { motion } from "framer-motion";
 import { useIsCommittee } from "./hooks/useIsCommittee";
 
+const EVENTS_PREVIEW_COUNT = 6;
+
 export default function Home() {
 	const { isCommittee, isLoaded } = useIsCommittee();
 	const upcomingEventsRaw = useQuery(api.events.listUpcoming);
 	// Treat undefined (still loading / connection issue) as empty so the page doesn't spin forever
 	const upcomingEvents = upcomingEventsRaw ?? [];
 	const [selectedEvent, setSelectedEvent] = useState<ConvexEvent | null>(null);
+	const [showAllEvents, setShowAllEvents] = useState(false);
 
 	if (!isLoaded) {
 		return (
@@ -31,6 +34,12 @@ export default function Home() {
 	const scrollToContact = () => {
 		document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
 	};
+
+	const hasMoreEvents = upcomingEvents.length > EVENTS_PREVIEW_COUNT;
+	const visibleEvents = showAllEvents
+		? upcomingEvents
+		: upcomingEvents.slice(0, EVENTS_PREVIEW_COUNT);
+	const hiddenCount = upcomingEvents.length - EVENTS_PREVIEW_COUNT;
 
 	return (
 		<main className="min-h-screen">
@@ -75,18 +84,42 @@ export default function Home() {
 							</p>
 						</div>
 					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							{upcomingEvents.map((event, index) => (
-								<motion.div
-									key={event._id}
-									initial={{ opacity: 0, y: 20 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: index * 0.1 }}
-								>
-									<EventCard event={event as ConvexEvent} />
-								</motion.div>
-							))}
-						</div>
+						<>
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+								{visibleEvents.map((event, index) => (
+									<motion.div
+										key={event._id}
+										initial={{ opacity: 0, y: 20 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ delay: index * 0.1 }}
+									>
+										<EventCard event={event as ConvexEvent} />
+									</motion.div>
+								))}
+							</div>
+
+							{hasMoreEvents && (
+								<div className="flex justify-center mt-8">
+									<button
+										onClick={() => {
+											if (showAllEvents) {
+												setShowAllEvents(false);
+												document
+													.getElementById("events")
+													?.scrollIntoView({ behavior: "smooth" });
+											} else {
+												setShowAllEvents(true);
+											}
+										}}
+										className="px-6 py-2.5 rounded-xl border border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-300 text-sm font-medium"
+									>
+										{showAllEvents
+											? "Show Less"
+											: `Show More Events (${hiddenCount} more)`}
+									</button>
+								</div>
+							)}
+						</>
 					)}
 				</section>
 
