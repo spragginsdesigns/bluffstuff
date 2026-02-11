@@ -8,7 +8,7 @@ import { useUser } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import {
 	generateGoogleCalendarLink,
-	generateICalendarLink
+	downloadICSFile
 } from "../utils/calendar";
 
 interface RsvpModalProps {
@@ -79,6 +79,7 @@ export default function RsvpModal({
 	const eventDetails = {
 		title: eventTitle,
 		date: eventDate,
+		time: eventTime,
 		description: `${eventTitle} at ${eventLocation}`,
 		location: eventLocation
 	};
@@ -166,13 +167,13 @@ export default function RsvpModal({
 								>
 									Add to Google Calendar
 								</button>
-								<a
-									href={generateICalendarLink(eventDetails)}
-									download={`${eventTitle}.ics`}
+								<button
+									type="button"
+									onClick={() => downloadICSFile(eventDetails)}
 									className="px-4 py-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 transition-colors text-sm font-medium text-center"
 								>
-									Download .ics
-								</a>
+									Add to Apple/Outlook
+								</button>
 							</div>
 
 							<button
