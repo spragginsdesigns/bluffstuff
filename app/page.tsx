@@ -143,7 +143,7 @@ export default function Home() {
 								{
 									name: "Donnalee",
 									role: "Committee Member",
-									desc: "Our creative touch — makes every event feel special"
+									desc: "Our go-to helper — always stepping up wherever she's needed"
 								}
 							].map((member, index) => (
 								<motion.div
