@@ -28,7 +28,6 @@ export default function EventFormModal({
 	const [date, setDate] = useState(editEvent?.date ?? "");
 	const [time, setTime] = useState(editEvent?.time ?? "");
 	const [location, setLocation] = useState(editEvent?.location ?? "");
-	const [imageUrl, setImageUrl] = useState(editEvent?.imageUrl ?? "");
 	const [status, setStatus] = useState<
 		"idle" | "submitting" | "success" | "error"
 	>("idle");
@@ -55,7 +54,6 @@ export default function EventFormModal({
 					date,
 					time,
 					location,
-					imageUrl: imageUrl || undefined,
 					updaterEmail: creatorEmail
 				});
 			} else {
@@ -65,7 +63,6 @@ export default function EventFormModal({
 					date,
 					time,
 					location,
-					imageUrl: imageUrl || undefined,
 					createdBy: creatorEmail
 				});
 			}
@@ -179,19 +176,6 @@ export default function EventFormModal({
 								value={location}
 								onChange={(e) => setLocation(e.target.value)}
 								placeholder="e.g. Community Clubhouse"
-								className="w-full px-4 py-2.5 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-							/>
-						</div>
-
-						<div>
-							<label className="block text-sm font-medium text-gray-300 mb-1">
-								Image URL (optional)
-							</label>
-							<input
-								type="url"
-								value={imageUrl}
-								onChange={(e) => setImageUrl(e.target.value)}
-								placeholder="https://example.com/image.jpg"
 								className="w-full px-4 py-2.5 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
 							/>
 						</div>

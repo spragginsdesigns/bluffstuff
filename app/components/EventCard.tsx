@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ConvexEvent } from "@/types/Event";
@@ -28,9 +27,6 @@ export default function EventCard({ event }: EventCardProps) {
 		day: "numeric"
 	});
 
-	const defaultImage =
-		"https://utfs.io/f/34fb3fee-eaca-4a08-84a5-c768e0ebcf3d-gyk9jk.webp";
-
 	return (
 		<>
 			<motion.div
@@ -38,36 +34,25 @@ export default function EventCard({ event }: EventCardProps) {
 				transition={{ duration: 0.2 }}
 				className="bg-gray-800/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg border border-gray-700/50 hover:border-purple-500/30 transition-all duration-300 hover:shadow-purple-500/10 hover:shadow-2xl"
 			>
-				{/* Image with gradient overlay */}
-				<div className="relative h-48 w-full overflow-hidden">
-					<Image
-						src={event.imageUrl || defaultImage}
-						alt={event.title}
-						fill
-						className="object-cover transition-transform duration-500 hover:scale-105"
-					/>
-					<div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
-
-					{/* Date badge */}
-					<div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md rounded-xl px-3 py-2 text-center border border-white/10">
-						<div className="text-xs text-purple-300 font-medium uppercase">
-							{eventDate.toLocaleDateString("en-US", { month: "short" })}
-						</div>
-						<div className="text-2xl text-white font-bold leading-none">
-							{eventDate.getDate()}
+				<div className="p-5">
+					<div className="flex items-start justify-between mb-3">
+						<h3 className="text-xl font-bold text-white">{event.title}</h3>
+						<div className="flex items-center gap-2 flex-shrink-0 ml-3">
+							{rsvpCount !== undefined && rsvpCount > 0 && (
+								<div className="bg-purple-500/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-white font-medium">
+									{rsvpCount} going
+								</div>
+							)}
+							<div className="bg-black/40 backdrop-blur-md rounded-xl px-3 py-2 text-center border border-white/10">
+								<div className="text-xs text-purple-300 font-medium uppercase">
+									{eventDate.toLocaleDateString("en-US", { month: "short" })}
+								</div>
+								<div className="text-2xl text-white font-bold leading-none">
+									{eventDate.getDate()}
+								</div>
+							</div>
 						</div>
 					</div>
-
-					{/* RSVP count badge */}
-					{rsvpCount !== undefined && rsvpCount > 0 && (
-						<div className="absolute top-3 left-3 bg-purple-500/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-white font-medium">
-							{rsvpCount} going
-						</div>
-					)}
-				</div>
-
-				<div className="p-5">
-					<h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
 
 					{/* Time & Location */}
 					<div className="flex flex-col gap-1.5 mb-3 text-sm">
