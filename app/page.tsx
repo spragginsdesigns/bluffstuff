@@ -17,7 +17,8 @@ const EVENTS_PREVIEW_COUNT = 6;
 
 export default function Home() {
 	const { isCommittee, isLoaded } = useIsCommittee();
-	const upcomingEventsRaw = useQuery(api.events.listUpcoming);
+	const localDate = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in user's timezone
+	const upcomingEventsRaw = useQuery(api.events.listUpcoming, { localDate });
 	// Treat undefined (still loading / connection issue) as empty so the page doesn't spin forever
 	const upcomingEvents = upcomingEventsRaw ?? [];
 	const [selectedEvent, setSelectedEvent] = useState<ConvexEvent | null>(null);

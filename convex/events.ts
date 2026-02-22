@@ -2,9 +2,10 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const listUpcoming = query({
-	args: {},
-	handler: async (ctx) => {
-		const today = new Date().toISOString().split("T")[0];
+	args: { localDate: v.optional(v.string()) },
+	handler: async (ctx, args) => {
+		// Use the client's local date if provided, otherwise fall back to UTC
+		const today = args.localDate ?? new Date().toISOString().split("T")[0];
 		const events = await ctx.db
 			.query("events")
 			.withIndex("by_active", (q) => q.eq("isActive", true))
