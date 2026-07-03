@@ -21,7 +21,6 @@ export default function Home() {
 	const upcomingEventsRaw = useQuery(api.events.listUpcoming, { localDate });
 	// Treat undefined (still loading / connection issue) as empty so the page doesn't spin forever
 	const upcomingEvents = upcomingEventsRaw ?? [];
-	const [selectedEvent, setSelectedEvent] = useState<ConvexEvent | null>(null);
 	const [showAllEvents, setShowAllEvents] = useState(false);
 
 	if (!isLoaded) {
@@ -41,10 +40,11 @@ export default function Home() {
 		? upcomingEvents
 		: upcomingEvents.slice(0, EVENTS_PREVIEW_COUNT);
 	const hiddenCount = upcomingEvents.length - EVENTS_PREVIEW_COUNT;
+	const nextEvent = (upcomingEvents[0] as ConvexEvent | undefined) ?? null;
 
 	return (
 		<main className="min-h-screen">
-			<Hero />
+			<Hero nextEvent={nextEvent} />
 
 			<motion.div
 				initial={{ opacity: 0 }}
@@ -55,10 +55,15 @@ export default function Home() {
 				{isCommittee && <CommitteeDashboard />}
 
 				{/* Events Section */}
-				<section id="events" className="container mx-auto px-4 py-12 md:py-16">
-					<h2 className="text-2xl md:text-3xl font-bold mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-						Upcoming Events
-					</h2>
+				<section id="events" className="container mx-auto px-4 py-12 md:py-16 scroll-mt-20">
+					<div className="text-center mb-8">
+						<h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+							Upcoming Events
+						</h2>
+						<p className="text-gray-400 mt-2 text-base md:text-lg">
+							Don&apos;t miss out on community gatherings
+						</p>
+					</div>
 
 					{upcomingEvents.length === 0 ? (
 						<div className="text-center py-12">
@@ -125,54 +130,51 @@ export default function Home() {
 				</section>
 
 				{/* Monthly Calendar */}
-				<section className="container mx-auto px-4 py-8 md:py-12">
-					<div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-5 md:p-8 border border-gray-700/50 max-w-4xl mx-auto">
-						<h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-							Event Calendar
+				<section id="calendar" className="container mx-auto px-4 py-8 md:py-12 scroll-mt-20">
+					<div className="bg-gray-800/30 backdrop-blur-sm rounded-3xl p-5 md:p-8 border border-gray-700/50 max-w-4xl mx-auto">
+						<h2 className="text-3xl md:text-4xl font-bold mb-2 text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+							This Month at the Bluffs
 						</h2>
+						<p className="text-gray-400 text-center mb-6 text-base">
+							Tap a day or an event to see the details
+						</p>
 						<MonthlyCalendar
-						events={upcomingEvents as ConvexEvent[]}
-						onEventClick={(event) => {
-							setSelectedEvent(event);
-							document
-								.getElementById("events")
-								?.scrollIntoView({ behavior: "smooth" });
-						}}
-					/>
+							events={upcomingEvents as ConvexEvent[]}
+							onEventClick={() => {
+								document
+									.getElementById("events")
+									?.scrollIntoView({ behavior: "smooth" });
+							}}
+						/>
 					</div>
 				</section>
 
 				{/* About the Committee */}
 				<section
 					id="committee"
-					className="py-12 md:py-16 bg-gradient-to-br from-gray-900/50 to-gray-800/50"
+					className="py-12 md:py-16 bg-gradient-to-br from-gray-900/50 to-gray-800/50 scroll-mt-20"
 				>
 					<div className="container mx-auto px-4 max-w-4xl">
-						<h2 className="text-2xl md:text-3xl font-bold mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-							Meet the Activities Committee
+						<h2 className="text-3xl md:text-4xl font-bold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+							Meet Your Activities Committee
 						</h2>
 						<p className="text-gray-300 text-center mb-10 max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-							We&apos;re a group of your neighbors who love bringing the
-							community together through fun events and activities. Our goal is
-							to make Woodward Bluffs the best place to live!
+							We&apos;re your neighbors — and we love bringing the community
+							together through fun events and activities. Say hi when you see
+							us around the park!
 						</p>
 
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+						<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
 							{[
 								{
-									name: "Kathy",
+									name: "Kim Anderson",
 									role: "Committee Leader",
-									desc: "The heart and soul of our committee — keeps everything running smoothly"
+									desc: "Leads the committee and keeps everything running smoothly — the heart of our events"
 								},
 								{
 									name: "Austin Spraggins",
 									role: "Treasurer",
 									desc: "Manages the budget so we can throw the best events possible"
-								},
-								{
-									name: "Kim Anderson",
-									role: "Committee Member",
-									desc: "Helps coordinate events and gets the word out to the community"
 								},
 								{
 									name: "Donnalee",
@@ -192,10 +194,12 @@ export default function Home() {
 											{member.name.charAt(0)}
 										</div>
 										<div>
-											<h3 className="text-white font-semibold">
+											<h3 className="text-white font-semibold text-base">
 												{member.name}
 											</h3>
-											<p className="text-purple-400 text-sm">{member.role}</p>
+											<p className="text-cyan-400 text-sm font-medium">
+												{member.role}
+											</p>
 										</div>
 									</div>
 									<p className="text-gray-400 text-sm">{member.desc}</p>

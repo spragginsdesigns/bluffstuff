@@ -62,7 +62,7 @@ export default function ContactForm() {
 	return (
 		<section
 			id="contact"
-			className="py-16 md:py-24 bg-gradient-to-b from-[#131111] to-gray-900"
+			className="py-16 md:py-24 bg-gradient-to-b from-[#131111] to-gray-900 scroll-mt-20"
 		>
 			<div className="container mx-auto px-4 max-w-2xl">
 				<motion.div
@@ -73,10 +73,11 @@ export default function ContactForm() {
 				>
 					<div className="text-center mb-10">
 						<h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-							Contact Us
+							Get Involved
 						</h2>
-						<p className="mt-3 text-gray-400">
-							Have a question or suggestion? We&apos;d love to hear from you.
+						<p className="mt-3 text-gray-400 text-base md:text-lg">
+							Suggest an event, volunteer, or just say hello — we&apos;d love
+							to hear from you.
 						</p>
 					</div>
 

@@ -1,6 +1,8 @@
 {
-  "name": "Bluff Stuff",
-  "short_name": "Bluff Stuff",
+  "name": "BluffStuff — Woodward Bluffs Community Events",
+  "short_name": "BluffStuff",
+  "description": "Community events, RSVPs, and ideas for Woodward Bluffs Mobile Home Park.",
+  "start_url": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +17,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": "#131111",
+  "background_color": "#131111",
   "display": "standalone"
 }

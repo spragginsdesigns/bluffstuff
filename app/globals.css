@@ -8,7 +8,7 @@
 	--secondary: #1d1f1e;
 	--secondary-dark: #020202;
 	--background-start: #131111;
-	--background-end: #1d2520;
+	--background-end: #1b1520;
 	--text: #ffffff;
 	--text-muted: #9ca3af;
 	--accent: #ffa500;
@@ -22,6 +22,13 @@ body {
 		var(--background-end)
 	);
 	background-attachment: fixed;
+}
+
+@media print {
+	body {
+		background: #ffffff !important;
+		color: #111111 !important;
+	}
 }
 
 @layer components {

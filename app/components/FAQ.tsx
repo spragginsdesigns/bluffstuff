@@ -49,11 +49,19 @@ export default function FAQ() {
 	};
 
 	return (
-		<section id="faq" className="py-12 md:py-16 bg-gradient-to-br from-gray-900 to-gray-800">
+		<section
+			id="faq"
+			className="py-12 md:py-16 bg-gradient-to-br from-gray-900 to-gray-800 scroll-mt-20"
+		>
 			<div className="container mx-auto px-4 max-w-4xl">
-				<h2 className="text-2xl md:text-3xl font-bold mb-8 md:mb-12 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-					Frequently Asked Questions
-				</h2>
+				<div className="text-center mb-8 md:mb-12">
+					<h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
+						Common Questions
+					</h2>
+					<p className="text-gray-400 mt-2 text-base md:text-lg">
+						Everything you might be wondering about
+					</p>
+				</div>
 
 				<div className="space-y-3">
 					{faqs.map((faq, index) => (
