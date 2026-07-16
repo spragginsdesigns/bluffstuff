@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import { ConvexHttpClient } from "convex/browser";
 import nodemailer from "nodemailer";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import { Doc } from "@/convex/_generated/dataModel";
 import { formatFlyerDate } from "@/app/utils/flyer";
+import { convexQuery } from "@/app/utils/convexServer";
 import { SITE_URL } from "@/app/config/site";
 
 export async function POST(request: NextRequest) {
@@ -40,10 +39,10 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const convex = new ConvexHttpClient(convexUrl);
-		const convexUser = await convex.query(api.users.getUser, {
-			email: senderEmail
-		});
+		const convexUser = await convexQuery<Doc<"users"> | null>(
+			"users:getUser",
+			{ email: senderEmail }
+		);
 		if (convexUser?.role !== "committee") {
 			return NextResponse.json(
 				{ success: false, error: "Committee members only." },
@@ -59,8 +58,8 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const event = await convex.query(api.events.getById, {
-			id: eventId as Id<"events">
+		const event = await convexQuery<Doc<"events"> | null>("events:getById", {
+			id: eventId
 		});
 		if (!event) {
 			return NextResponse.json(
@@ -70,9 +69,11 @@ export async function POST(request: NextRequest) {
 		}
 
 		// The PNG is rendered by the edge route (next/og needs the edge
-		// runtime); fetch it from our own origin.
+		// runtime); fetch it from our own origin, bypassing the data cache
+		// so the email always carries the current flyer.
 		const flyerResponse = await fetch(
-			new URL(`/api/flyer/${eventId}`, request.url)
+			new URL(`/api/flyer/${eventId}`, request.url),
+			{ cache: "no-store" }
 		);
 		if (!flyerResponse.ok) {
 			throw new Error(`Flyer render failed with ${flyerResponse.status}`);

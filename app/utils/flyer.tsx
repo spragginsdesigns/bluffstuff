@@ -17,6 +17,7 @@ export interface FlyerEventData {
 	date: string; // YYYY-MM-DD
 	time: string;
 	location: string;
+	imageUrl?: string; // optional background art, composited behind the boxes
 }
 
 /**
@@ -105,6 +106,20 @@ export async function generateFlyerImage(
 		)
 	]);
 
+	// Fetch background art ourselves and hand satori the raw bytes —
+	// satori's own remote-image loading silently drops the layer.
+	let artData: ArrayBuffer | null = null;
+	if (event.imageUrl) {
+		try {
+			const artRes = await fetch(event.imageUrl, { cache: "no-store" });
+			if (artRes.ok) {
+				artData = await artRes.arrayBuffer();
+			}
+		} catch {
+			// Art is decoration — render the flyer without it rather than fail
+		}
+	}
+
 	const { d: qrPath, moduleCount } = buildQrPath(`${SITE_URL}/#events`);
 
 	const eventDate = parseEventDate(event.date);
@@ -148,9 +163,46 @@ export async function generateFlyerImage(
 						height: "100%",
 						backgroundColor: "#ffffff",
 						borderRadius: 24,
-						padding: "48px 56px"
+						padding: "48px 56px",
+						position: "relative",
+						overflow: "hidden"
 					}}
 				>
+					{/* Optional background art, faded under a white wash so the
+					    type and QR always stay readable */}
+					{artData && (
+						// eslint-disable-next-line @next/next/no-img-element -- satori template, next/image can't render here
+						<img
+							// satori accepts raw image bytes as src
+							src={artData as unknown as string}
+							alt=""
+							width={FLYER_WIDTH - 60}
+							height={FLYER_HEIGHT - 60}
+							style={{
+								position: "absolute",
+								top: 0,
+								left: 0,
+								width: FLYER_WIDTH - 60,
+								height: FLYER_HEIGHT - 60,
+								objectFit: "cover",
+								borderRadius: 24
+							}}
+						/>
+					)}
+					{artData && (
+						<div
+							style={{
+								position: "absolute",
+								top: 0,
+								left: 0,
+								width: "100%",
+								height: "100%",
+								background:
+									"linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.55) 40%, rgba(255,255,255,0.4) 70%, rgba(255,255,255,0.65) 100%)"
+							}}
+						/>
+					)}
+
 					{/* Committee header */}
 					<div
 						style={{
@@ -178,7 +230,8 @@ export async function generateFlyerImage(
 							lineHeight: 1.05,
 							color: INK,
 							textAlign: "center",
-							maxWidth: 1080
+							maxWidth: 1080,
+							backgroundColor: "#ffffff"
 						}}
 					>
 						{title}
@@ -209,7 +262,10 @@ export async function generateFlyerImage(
 							fontSize: 42,
 							letterSpacing: 3,
 							color: ACCENT,
-							marginTop: 30
+							marginTop: 30,
+							backgroundColor: "rgba(255,255,255,0.88)",
+							borderRadius: 18,
+							padding: "4px 28px"
 						}}
 					>
 						{location}
@@ -228,9 +284,12 @@ export async function generateFlyerImage(
 								fontFamily: "Poppins",
 								fontSize: 32,
 								lineHeight: 1.4,
-								color: "#3f3f46",
+								color: "#27272a",
 								textAlign: "center",
-								maxWidth: 940
+								maxWidth: 940,
+								backgroundColor: "rgba(255,255,255,0.88)",
+								borderRadius: 18,
+								padding: "10px 32px"
 							}}
 						>
 							{description}
@@ -270,7 +329,10 @@ export async function generateFlyerImage(
 							style={{
 								display: "flex",
 								flexDirection: "column",
-								maxWidth: 520
+								maxWidth: 520,
+								backgroundColor: "rgba(255,255,255,0.88)",
+								borderRadius: 22,
+								padding: "20px 28px"
 							}}
 						>
 							<div

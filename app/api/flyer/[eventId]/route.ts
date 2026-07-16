@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import { Doc } from "@/convex/_generated/dataModel";
 import { generateFlyerImage } from "@/app/utils/flyer";
+import { convexQuery } from "@/app/utils/convexServer";
 
 // next/og's Node runtime breaks on Windows (font path ERR_INVALID_URL);
 // the edge runtime loads its bundled font correctly everywhere.
@@ -12,18 +11,9 @@ export async function GET(
 	_request: NextRequest,
 	{ params }: { params: { eventId: string } }
 ) {
-	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-	if (!convexUrl) {
-		return NextResponse.json(
-			{ error: "NEXT_PUBLIC_CONVEX_URL is not configured." },
-			{ status: 500 }
-		);
-	}
-
 	try {
-		const convex = new ConvexHttpClient(convexUrl);
-		const event = await convex.query(api.events.getById, {
-			id: params.eventId as Id<"events">
+		const event = await convexQuery<Doc<"events"> | null>("events:getById", {
+			id: params.eventId
 		});
 
 		if (!event) {

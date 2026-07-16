@@ -98,6 +98,50 @@ export const update = mutation({
 	}
 });
 
+export const generateUploadUrl = mutation({
+	args: { requesterEmail: v.string() },
+	handler: async (ctx, args) => {
+		const user = await ctx.db
+			.query("users")
+			.filter((q) => q.eq(q.field("email"), args.requesterEmail))
+			.first();
+
+		if (!user || user.role !== "committee") {
+			throw new Error("Only committee members can upload files");
+		}
+
+		return await ctx.storage.generateUploadUrl();
+	}
+});
+
+export const setEventImage = mutation({
+	args: {
+		id: v.id("events"),
+		storageId: v.id("_storage"),
+		updaterEmail: v.string()
+	},
+	handler: async (ctx, args) => {
+		const user = await ctx.db
+			.query("users")
+			.filter((q) => q.eq(q.field("email"), args.updaterEmail))
+			.first();
+
+		if (!user || user.role !== "committee") {
+			throw new Error("Only committee members can update events");
+		}
+
+		const imageUrl = await ctx.storage.getUrl(args.storageId);
+		if (!imageUrl) {
+			throw new Error("Uploaded file not found in storage");
+		}
+
+		return await ctx.db.patch(args.id, {
+			imageUrl,
+			updatedAt: Date.now()
+		});
+	}
+});
+
 export const archive = mutation({
 	args: {
 		id: v.id("events"),

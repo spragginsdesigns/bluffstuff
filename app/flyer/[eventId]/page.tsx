@@ -23,6 +23,25 @@ export default function EventFlyerPage() {
 	const [emailStatus, setEmailStatus] = useState<
 		"idle" | "sending" | "sent" | "error"
 	>("idle");
+	const [artStatus, setArtStatus] = useState<
+		"idle" | "generating" | "error"
+	>("idle");
+
+	const handleGenerateArt = async () => {
+		setArtStatus("generating");
+		try {
+			const res = await fetch("/api/generateFlyerArt", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ eventId })
+			});
+			// The Convex event updates in real time; the img src is keyed on
+			// event.imageUrl so the flyer refreshes itself when art lands.
+			setArtStatus(res.ok ? "idle" : "error");
+		} catch {
+			setArtStatus("error");
+		}
+	};
 
 	const handleEmailFlyer = async () => {
 		setEmailStatus("sending");
@@ -98,18 +117,38 @@ export default function EventFlyerPage() {
 									: "Email to the Printer"}
 						</button>
 					)}
+					{isCommittee && (
+						<button
+							onClick={handleGenerateArt}
+							disabled={artStatus === "generating"}
+							className="px-8 py-3 rounded-xl bg-gray-700 text-white font-bold hover:bg-gray-600 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+						>
+							{artStatus === "generating"
+								? "Painting… (about a minute)"
+								: event.imageUrl
+									? "New Background Art"
+									: "Generate Background Art"}
+						</button>
+					)}
 				</div>
 				{emailStatus === "error" && (
 					<p className="text-red-400 text-sm mt-3">
 						The email didn&apos;t send — try again in a minute.
 					</p>
 				)}
+				{artStatus === "error" && (
+					<p className="text-red-400 text-sm mt-3">
+						Art generation failed — try again in a minute.
+					</p>
+				)}
 			</div>
 
-			{/* The flyer PNG — exactly what prints and what gets emailed */}
+			{/* The flyer PNG — exactly what prints and what gets emailed.
+			    Keyed on imageUrl so it refreshes when background art lands. */}
 			{/* eslint-disable-next-line @next/next/no-img-element */}
 			<img
-				src={flyerUrl}
+				key={event.imageUrl ?? "no-art"}
+				src={`${flyerUrl}?v=${encodeURIComponent(event.imageUrl ?? "none")}`}
 				alt={`${event.title} flyer — ${event.date} at ${event.time}, ${event.location}`}
 				className="w-full max-w-2xl rounded-2xl shadow-2xl mx-4 print:max-w-full print:rounded-none print:shadow-none print:mx-0"
 			/>
