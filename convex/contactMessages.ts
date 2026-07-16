@@ -18,12 +18,17 @@ export const submit = mutation({
 });
 
 export const list = query({
-	args: { requesterEmail: v.string() },
-	handler: async (ctx, args) => {
-		// Verify requester is a committee member
+	args: {},
+	handler: async (ctx) => {
+		// Identity comes from the Clerk JWT — not a client-supplied email
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity?.email) {
+			return [];
+		}
+
 		const user = await ctx.db
 			.query("users")
-			.filter((q) => q.eq(q.field("email"), args.requesterEmail))
+			.filter((q) => q.eq(q.field("email"), identity.email))
 			.first();
 
 		if (!user || user.role !== "committee") {

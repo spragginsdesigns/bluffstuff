@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useIsCommittee } from "../hooks/useIsCommittee";
 import { ConvexEvent } from "@/types/Event";
 import EventFormModal from "./EventFormModal";
 import { motion } from "framer-motion";
@@ -12,12 +11,9 @@ type EventFilter = "active" | "all" | "archived";
 const COLLAPSED_EVENT_COUNT = 5;
 
 export default function CommitteeDashboard() {
-	const { email } = useIsCommittee();
 	const allEvents = useQuery(api.events.listAll);
-	const contactMessages = useQuery(
-		api.contactMessages.list,
-		email ? { requesterEmail: email } : "skip"
-	);
+	// Identity flows through the Clerk JWT — no client-supplied email
+	const contactMessages = useQuery(api.contactMessages.list, {});
 
 	const [activeTab, setActiveTab] = useState<
 		"events" | "messages" | "members"

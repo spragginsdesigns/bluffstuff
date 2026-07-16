@@ -4,10 +4,17 @@ import { v } from "convex/values";
 export const getByEvent = query({
 	args: { eventId: v.id("events") },
 	handler: async (ctx, args) => {
-		return await ctx.db
+		const rsvps = await ctx.db
 			.query("rsvps")
 			.withIndex("by_event", (q) => q.eq("eventId", args.eventId))
 			.collect();
+
+		// Public query — expose names only, never emails/phones/notes
+		return rsvps.map((r) => ({
+			_id: r._id,
+			name: r.name,
+			createdAt: r.createdAt
+		}));
 	}
 });
 
@@ -49,20 +56,3 @@ export const create = mutation({
 	}
 });
 
-export const remove = mutation({
-	args: {
-		eventId: v.id("events"),
-		email: v.string()
-	},
-	handler: async (ctx, args) => {
-		const rsvps = await ctx.db
-			.query("rsvps")
-			.withIndex("by_event", (q) => q.eq("eventId", args.eventId))
-			.collect();
-
-		const rsvp = rsvps.find((r) => r.email === args.email);
-		if (rsvp) {
-			await ctx.db.delete(rsvp._id);
-		}
-	}
-});

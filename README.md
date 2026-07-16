@@ -58,7 +58,11 @@ POST https://<convex-deployment>.convex.cloud/api/mutation
 
 Agent tip: post the JSON from a UTF-8 file rather than inline shell strings — em-dashes/smart quotes mangle through bash and return `BadJsonBody`.
 
-Known open gap (by design for now): public *reads* — RSVP lists and the committee messages query rely on client-side gating. Fixing that properly means Clerk↔Convex JWT auth (`ctx.auth`).
+### Read security
+
+- `rsvps:getByEvent` is public but returns **names only** — attendee emails, phones, and notes never leave the server.
+- `contactMessages:list` authenticates via **Clerk↔Convex JWT auth**: the browser's Clerk session token (JWT template named `convex`, created via Clerk's Backend API) flows through `ConvexProviderWithClerk`, and the query checks `ctx.auth.getUserIdentity()` + committee role server-side. Unauthenticated or non-committee callers get `[]`.
+- The Clerk issuer domain lives in `CLERK_JWT_ISSUER_DOMAIN` on each Convex deployment (see `convex/auth.config.ts`).
 
 ---
 
@@ -75,6 +79,7 @@ Never hardcode any of these. Local values live in `.env.local`.
 | `FLYER_RECIPIENT_EMAIL` | Local + Vercel | Who receives new-event flyers (the committee member who prints) |
 | `OPENAI_API_KEY` | Local + Vercel | Flyer background art (gpt-image-2) |
 | `COMMITTEE_API_SECRET` | Local + Vercel + **both Convex deployments** | Gates committee write mutations |
+| `CLERK_JWT_ISSUER_DOMAIN` | **Both Convex deployments only** | Clerk instance domain for JWT auth (`convex/auth.config.ts`) |
 
 Convex has **two deployments**: dev (`fantastic-buzzard-256`) and prod (`festive-mink-675`). Test data never touches prod.
 

@@ -83,8 +83,8 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className="flex flex-col min-h-screen bg-[#131111] text-white">
-				<ConvexClientProvider>
-					<Providers>
+				<Providers>
+					<ConvexClientProvider>
 						<UserSync />
 						<header className="fixed w-full top-0 z-50 print:hidden">
 							<NavBar />
@@ -100,8 +100,8 @@ export default function RootLayout({
 							<div className="h-16 md:hidden" aria-hidden />
 							<MobileTabBar />
 						</div>
-					</Providers>
-				</ConvexClientProvider>
+					</ConvexClientProvider>
+				</Providers>
 			</body>
 		</html>
 	);

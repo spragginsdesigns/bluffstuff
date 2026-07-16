@@ -214,7 +214,7 @@ One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with Q
 - **Convex deploys are manual.** After editing `convex/`: `npx convex dev --once` (dev) and `npx convex deploy` (prod) — Vercel only builds Next.js.
 - Flyer fonts (Anton, Poppins) are checked into `app/fonts/` and loaded via `fetch(new URL(..., import.meta.url))`.
 - Archiving an event hides it from the site but the flyer URL still renders — archive ≠ delete.
-- Known read-side gap: RSVP attendee lists and contact-message queries are client-gated; the proper fix is Clerk↔Convex JWT auth (`ctx.auth`).
+- **Reads use Clerk↔Convex JWT auth.** `ConvexProviderWithClerk` (inside ClerkProvider — order matters) sends the Clerk JWT; committee-only queries check `ctx.auth.getUserIdentity()` — never a client-supplied email. Public queries must return sanitized fields only (`rsvps:getByEvent` → names, no PII). Requires: JWT template named "convex" in Clerk (created via Backend API), `CLERK_JWT_ISSUER_DOMAIN` set on both Convex deployments, `convex/auth.config.ts`.
 
 ## Key Files
 
@@ -260,3 +260,4 @@ Required (never hardcode these):
 - `FLYER_RECIPIENT_EMAIL` — where new-event flyer PNGs are auto-emailed (the committee member who prints them)
 - `OPENAI_API_KEY` — flyer background art generation (gpt-image-2)
 - `COMMITTEE_API_SECRET` — gates committee write mutations; must match on Vercel AND both Convex deployments (`npx convex env set COMMITTEE_API_SECRET <v> [--prod]`)
+- `CLERK_JWT_ISSUER_DOMAIN` — Convex deployments only; the Clerk instance domain for JWT auth
