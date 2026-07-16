@@ -200,9 +200,21 @@ Never assume changes work. After ANY change:
 - Single-page layout with smooth scroll-to-section navigation
 
 ### Routes & Middleware
-- Public routes: `/`, `/sign-in`, `/sign-up` (see `middleware.ts`)
+- Public routes: `/`, `/qr`, `/flyer/*`, `/api/flyer/*`, `/sign-in`, `/sign-up` (see `middleware.ts`)
 - All other routes require Clerk authentication
 - Home page uses anchor sections: `#events`, `#calendar`, `#committee`, `#resources`, `#faq`, `#contact`
+
+### Event → Flyer Pipeline (see README for the full picture)
+One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with QR (`/api/flyer/[eventId]`), flyer page (`/flyer/[eventId]`), auto-email to `FLYER_RECIPIENT_EMAIL` (website-form creation only), and optional gpt-image-2 background art. Hard-won constraints — do not relearn these:
+
+- **Flyer PNG must render on the edge runtime.** `next/og` ImageResponse in the Node runtime breaks on Windows dev (font-path `ERR_INVALID_URL`). Node routes needing the PNG (e.g. sendFlyer) fetch `/api/flyer/[id]` from their own origin with `cache: "no-store"`.
+- **Satori rules** (`app/utils/flyer.tsx`): text nodes must be a single string (template literals, never `{a} · {b}`); component libraries don't render (react-qr-code silently collapses) — the QR is a raw `<svg><path/>` built with `qrcode-generator`; remote images are silently dropped — fetch them yourself and pass the raw ArrayBuffer as `img src`.
+- **Server-side Convex READS must use `convexQuery()`** from `app/utils/convexServer.ts` — Next 14 caches `fetch()` in route handlers and ConvexHttpClient rides on fetch, so direct queries return stale documents. Mutations stay on ConvexHttpClient.
+- **Committee writes are secret-gated.** `events:create/update/archive/generateUploadUrl/setEventImage` require a `secret` arg matching `COMMITTEE_API_SECRET`. Browser code NEVER holds the secret — website writes go through the Clerk-authenticated `/api/events` route which injects it server-side. Email args on mutations are attribution only.
+- **Convex deploys are manual.** After editing `convex/`: `npx convex dev --once` (dev) and `npx convex deploy` (prod) — Vercel only builds Next.js.
+- Flyer fonts (Anton, Poppins) are checked into `app/fonts/` and loaded via `fetch(new URL(..., import.meta.url))`.
+- Archiving an event hides it from the site but the flyer URL still renders — archive ≠ delete.
+- Known read-side gap: RSVP attendee lists and contact-message queries are client-gated; the proper fix is Clerk↔Convex JWT auth (`ctx.auth`).
 
 ## Key Files
 
@@ -218,6 +230,13 @@ Never assume changes work. After ANY change:
 | User sync (Clerk → Convex) | `app/components/UserSync.tsx` |
 | Committee role hook | `app/hooks/useIsCommittee.ts` |
 | Admin seed page | `app/admin/seed/page.tsx` |
+| Flyer template (satori/edge) | `app/utils/flyer.tsx` |
+| Flyer PNG route | `app/api/flyer/[eventId]/route.ts` |
+| Flyer page | `app/flyer/[eventId]/page.tsx` |
+| Committee event writes (website) | `app/api/events/route.ts` |
+| Flyer email route | `app/api/sendFlyer/route.ts` |
+| Flyer art generation | `app/api/generateFlyerArt/route.ts` |
+| Server-side Convex reads (no-store) | `app/utils/convexServer.ts` |
 | Type definitions | `types/Event.ts` |
 | Next.js config | `next.config.mjs` |
 | Tailwind config | `tailwind.config.ts` |
@@ -239,3 +258,5 @@ Required (never hardcode these):
 - `NEXT_PUBLIC_CONVEX_URL` — Convex client URL
 - SendGrid / Nodemailer credentials (for email reminders)
 - `FLYER_RECIPIENT_EMAIL` — where new-event flyer PNGs are auto-emailed (the committee member who prints them)
+- `OPENAI_API_KEY` — flyer background art generation (gpt-image-2)
+- `COMMITTEE_API_SECRET` — gates committee write mutations; must match on Vercel AND both Convex deployments (`npx convex env set COMMITTEE_API_SECRET <v> [--prod]`)
