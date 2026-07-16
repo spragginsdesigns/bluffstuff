@@ -90,9 +90,11 @@ export async function POST(request: NextRequest) {
 				Authorization: `Bearer ${openaiKey}`
 			},
 			body: JSON.stringify({
-				model: "gpt-image-1",
+				model: "gpt-image-2",
 				prompt,
-				size: "1024x1536",
+				// Near-exact flyer aspect ratio (1275x1650); gpt-image-2 takes
+				// any size in multiples of 16, so cover-crop loss is minimal
+				size: "1216x1568",
 				quality: "medium",
 				n: 1
 			})
