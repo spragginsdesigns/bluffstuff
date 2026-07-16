@@ -1,26 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { ConvexEvent } from "@/types/Event";
 import { motion } from "framer-motion";
 
 interface EventFormModalProps {
 	onClose: () => void;
-	creatorEmail: string;
 	editEvent?: ConvexEvent | null;
 }
 
 export default function EventFormModal({
 	onClose,
-	creatorEmail,
 	editEvent
 }: EventFormModalProps) {
-	const createEvent = useMutation(api.events.create);
-	const updateEvent = useMutation(api.events.update);
-
 	const [title, setTitle] = useState(editEvent?.title ?? "");
 	const [description, setDescription] = useState(
 		editEvent?.description ?? ""
@@ -50,26 +42,43 @@ export default function EventFormModal({
 
 		try {
 			if (editEvent) {
-				await updateEvent({
-					id: editEvent._id,
-					title,
-					description,
-					date,
-					time,
-					location,
-					updaterEmail: creatorEmail
+				const res = await fetch("/api/events", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						action: "update",
+						id: editEvent._id,
+						title,
+						description,
+						date,
+						time,
+						location
+					})
 				});
+				if (!res.ok) {
+					const data = await res.json().catch(() => null);
+					throw new Error(data?.error ?? "Failed to update event");
+				}
 				setStatus("success");
 				setTimeout(onClose, 1000);
 			} else {
-				const newEventId = await createEvent({
-					title,
-					description,
-					date,
-					time,
-					location,
-					createdBy: creatorEmail
+				const res = await fetch("/api/events", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						action: "create",
+						title,
+						description,
+						date,
+						time,
+						location
+					})
 				});
+				if (!res.ok) {
+					const data = await res.json().catch(() => null);
+					throw new Error(data?.error ?? "Failed to create event");
+				}
+				const { eventId: newEventId } = await res.json();
 				setStatus("success");
 				// Auto-email the flyer to the printer; failure never blocks creation
 				setFlyerStatus("sending");

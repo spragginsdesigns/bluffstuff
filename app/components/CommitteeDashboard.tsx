@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useIsCommittee } from "../hooks/useIsCommittee";
 import { ConvexEvent } from "@/types/Event";
@@ -18,7 +18,6 @@ export default function CommitteeDashboard() {
 		api.contactMessages.list,
 		email ? { requesterEmail: email } : "skip"
 	);
-	const archiveEvent = useMutation(api.events.archive);
 
 	const [activeTab, setActiveTab] = useState<
 		"events" | "messages" | "members"
@@ -29,8 +28,11 @@ export default function CommitteeDashboard() {
 	const [showAllFilteredEvents, setShowAllFilteredEvents] = useState(false);
 
 	const handleArchive = async (eventId: ConvexEvent["_id"]) => {
-		if (!email) return;
-		await archiveEvent({ id: eventId, archiverEmail: email });
+		await fetch("/api/events", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ action: "archive", id: eventId })
+		});
 	};
 
 	const filterCounts = useMemo(() => {
@@ -384,7 +386,6 @@ export default function CommitteeDashboard() {
 						setShowEventForm(false);
 						setEditingEvent(null);
 					}}
-					creatorEmail={email}
 					editEvent={editingEvent}
 				/>
 			)}

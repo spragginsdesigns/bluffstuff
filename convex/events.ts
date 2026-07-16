@@ -1,6 +1,18 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// Committee write mutations are gated by a shared secret (set with
+// `npx convex env set COMMITTEE_API_SECRET ...` per deployment). Clients
+// never hold it — the website's writes go through Clerk-authenticated
+// Next.js API routes, and trusted agents call Convex with it directly.
+// The email args remain for attribution but are not the auth boundary.
+function requireCommitteeSecret(secret: string): void {
+	const expected = process.env.COMMITTEE_API_SECRET;
+	if (!expected || secret !== expected) {
+		throw new Error("Invalid committee secret");
+	}
+}
+
 export const listUpcoming = query({
 	args: { localDate: v.optional(v.string()) },
 	handler: async (ctx, args) => {
@@ -43,10 +55,13 @@ export const create = mutation({
 		time: v.string(),
 		location: v.string(),
 		imageUrl: v.optional(v.string()),
-		createdBy: v.string()
+		createdBy: v.string(),
+		secret: v.string()
 	},
 	handler: async (ctx, args) => {
-		// Verify creator is a committee member
+		requireCommitteeSecret(args.secret);
+
+		// Attribution must still point at a real committee member
 		const user = await ctx.db
 			.query("users")
 			.filter((q) => q.eq(q.field("email"), args.createdBy))
@@ -56,8 +71,9 @@ export const create = mutation({
 			throw new Error("Only committee members can create events");
 		}
 
+		const { secret, ...eventFields } = args;
 		return await ctx.db.insert("events", {
-			...args,
+			...eventFields,
 			isActive: true,
 			createdAt: Date.now(),
 			updatedAt: Date.now()
@@ -74,9 +90,12 @@ export const update = mutation({
 		time: v.optional(v.string()),
 		location: v.optional(v.string()),
 		imageUrl: v.optional(v.string()),
-		updaterEmail: v.string()
+		updaterEmail: v.string(),
+		secret: v.string()
 	},
 	handler: async (ctx, args) => {
+		requireCommitteeSecret(args.secret);
+
 		const user = await ctx.db
 			.query("users")
 			.filter((q) => q.eq(q.field("email"), args.updaterEmail))
@@ -86,7 +105,7 @@ export const update = mutation({
 			throw new Error("Only committee members can update events");
 		}
 
-		const { id, updaterEmail, ...updates } = args;
+		const { id, updaterEmail, secret, ...updates } = args;
 		const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
 		for (const [key, value] of Object.entries(updates)) {
 			if (value !== undefined) {
@@ -99,8 +118,10 @@ export const update = mutation({
 });
 
 export const generateUploadUrl = mutation({
-	args: { requesterEmail: v.string() },
+	args: { requesterEmail: v.string(), secret: v.string() },
 	handler: async (ctx, args) => {
+		requireCommitteeSecret(args.secret);
+
 		const user = await ctx.db
 			.query("users")
 			.filter((q) => q.eq(q.field("email"), args.requesterEmail))
@@ -118,9 +139,12 @@ export const setEventImage = mutation({
 	args: {
 		id: v.id("events"),
 		storageId: v.id("_storage"),
-		updaterEmail: v.string()
+		updaterEmail: v.string(),
+		secret: v.string()
 	},
 	handler: async (ctx, args) => {
+		requireCommitteeSecret(args.secret);
+
 		const user = await ctx.db
 			.query("users")
 			.filter((q) => q.eq(q.field("email"), args.updaterEmail))
@@ -145,9 +169,12 @@ export const setEventImage = mutation({
 export const archive = mutation({
 	args: {
 		id: v.id("events"),
-		archiverEmail: v.string()
+		archiverEmail: v.string(),
+		secret: v.string()
 	},
 	handler: async (ctx, args) => {
+		requireCommitteeSecret(args.secret);
+
 		const user = await ctx.db
 			.query("users")
 			.filter((q) => q.eq(q.field("email"), args.archiverEmail))

@@ -17,11 +17,13 @@ export const maxDuration = 180;
 export async function POST(request: NextRequest) {
 	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 	const openaiKey = process.env.OPENAI_API_KEY;
+	const secret = process.env.COMMITTEE_API_SECRET;
 
-	if (!convexUrl || !openaiKey) {
+	if (!convexUrl || !openaiKey || !secret) {
 		const missing = [
 			!convexUrl && "NEXT_PUBLIC_CONVEX_URL",
-			!openaiKey && "OPENAI_API_KEY"
+			!openaiKey && "OPENAI_API_KEY",
+			!secret && "COMMITTEE_API_SECRET"
 		]
 			.filter(Boolean)
 			.join(", ");
@@ -118,7 +120,8 @@ export async function POST(request: NextRequest) {
 
 		// Upload into Convex file storage, then save the URL on the event
 		const uploadUrl = await convex.mutation(api.events.generateUploadUrl, {
-			requesterEmail: senderEmail
+			requesterEmail: senderEmail,
+			secret
 		});
 		const uploadRes = await fetch(uploadUrl, {
 			method: "POST",
@@ -133,7 +136,8 @@ export async function POST(request: NextRequest) {
 		await convex.mutation(api.events.setEventImage, {
 			id: eventId as Id<"events">,
 			storageId,
-			updaterEmail: senderEmail
+			updaterEmail: senderEmail,
+			secret
 		});
 
 		return NextResponse.json({ success: true }, { status: 200 });
