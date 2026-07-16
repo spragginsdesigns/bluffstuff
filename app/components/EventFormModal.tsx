@@ -31,6 +31,9 @@ export default function EventFormModal({
 	const [status, setStatus] = useState<
 		"idle" | "submitting" | "success" | "error"
 	>("idle");
+	const [flyerStatus, setFlyerStatus] = useState<
+		"idle" | "sending" | "sent" | "failed"
+	>("idle");
 	const [errorMessage, setErrorMessage] = useState("");
 
 	useEffect(() => {
@@ -56,8 +59,10 @@ export default function EventFormModal({
 					location,
 					updaterEmail: creatorEmail
 				});
+				setStatus("success");
+				setTimeout(onClose, 1000);
 			} else {
-				await createEvent({
+				const newEventId = await createEvent({
 					title,
 					description,
 					date,
@@ -65,9 +70,21 @@ export default function EventFormModal({
 					location,
 					createdBy: creatorEmail
 				});
+				setStatus("success");
+				// Auto-email the flyer to the printer; failure never blocks creation
+				setFlyerStatus("sending");
+				try {
+					const res = await fetch("/api/sendFlyer", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ eventId: newEventId })
+					});
+					setFlyerStatus(res.ok ? "sent" : "failed");
+				} catch {
+					setFlyerStatus("failed");
+				}
+				setTimeout(onClose, 2000);
 			}
-			setStatus("success");
-			setTimeout(onClose, 1000);
 		} catch (err) {
 			setStatus("error");
 			setErrorMessage(
@@ -187,6 +204,22 @@ export default function EventFormModal({
 								className="p-3 rounded-lg bg-green-500/20 border border-green-500 text-green-400 text-sm"
 							>
 								Event {editEvent ? "updated" : "created"} successfully!
+								{flyerStatus === "sending" && (
+									<span className="block mt-1 text-green-300/80">
+										Emailing the flyer to the printer…
+									</span>
+								)}
+								{flyerStatus === "sent" && (
+									<span className="block mt-1 text-green-300/80">
+										Flyer emailed to the printer ✓
+									</span>
+								)}
+								{flyerStatus === "failed" && (
+									<span className="block mt-1 text-yellow-400">
+										Flyer email didn&apos;t send — use the Flyer button on the
+										event to print or resend it.
+									</span>
+								)}
 							</motion.div>
 						)}
 

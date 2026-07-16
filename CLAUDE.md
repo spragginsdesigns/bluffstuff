@@ -238,3 +238,4 @@ Required (never hardcode these):
 - `CONVEX_DEPLOYMENT` — Convex project deployment URL
 - `NEXT_PUBLIC_CONVEX_URL` — Convex client URL
 - SendGrid / Nodemailer credentials (for email reminders)
+- `FLYER_RECIPIENT_EMAIL` — where new-event flyer PNGs are auto-emailed (the committee member who prints them)

@@ -153,6 +153,27 @@ export default function EventCard({ event }: EventCardProps) {
 							</svg>
 							Apple / Outlook
 						</button>
+						<a
+							href={`/flyer/${event._id}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm text-gray-300 hover:text-white bg-gray-700/40 hover:bg-gray-700/70 border border-gray-600/30 hover:border-gray-500/50 transition-all duration-200"
+						>
+							<svg
+								className="w-4 h-4 text-orange-400"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-8 4h10a2 2 0 002-2V7.83a2 2 0 00-.59-1.42l-2.82-2.82A2 2 0 0013.17 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+								/>
+							</svg>
+							Flyer
+						</a>
 					</div>
 				</div>
 			</motion.div>

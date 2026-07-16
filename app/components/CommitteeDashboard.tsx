@@ -208,6 +208,14 @@ export default function CommitteeDashboard() {
 															</p>
 														</div>
 														<div className="flex gap-2 flex-shrink-0">
+															<a
+																href={`/flyer/${event._id}`}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="px-3 py-1.5 rounded-lg text-sm text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 transition-colors"
+															>
+																Flyer
+															</a>
 															<button
 																onClick={() => {
 																	setEditingEvent(event as ConvexEvent);
