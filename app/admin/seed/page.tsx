@@ -21,7 +21,7 @@ export default function SeedPage() {
 	if (!isAdmin) {
 		return (
 			<div className="flex items-center justify-center min-h-[70vh] text-center px-4">
-				<p className="text-gray-400">Access denied.</p>
+				<p className="text-ink-muted">Access denied.</p>
 			</div>
 		);
 	}
@@ -42,14 +42,18 @@ export default function SeedPage() {
 
 	return (
 		<div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
-			<h1 className="text-3xl font-bold mb-4">Database Initialization</h1>
-			<p className="text-gray-400 mb-2 text-sm">
+			<h1 className="font-display text-3xl font-bold mb-4 text-ink">
+				Database Initialization
+			</h1>
+			<p className="text-ink-muted mb-2 text-sm">
 				Signed in as {user?.primaryEmailAddress?.emailAddress}
 			</p>
-			<p className="text-xl mb-8">{status || "Ready to initialize..."}</p>
+			<p className="text-xl mb-8 text-ink">
+				{status || "Ready to initialize..."}
+			</p>
 			<button
 				onClick={() => void handleSeed()}
-				className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 transition-colors rounded-xl text-white font-medium"
+				className="px-6 py-3 bg-primary hover:bg-primary-strong transition-colors rounded-xl text-primary-fg font-medium"
 			>
 				Initialize / Upgrade Admin
 			</button>

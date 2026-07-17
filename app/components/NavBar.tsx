@@ -5,6 +5,10 @@ import Image from "next/image";
 import { useState } from "react";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
+import { NAV_LINKS } from "../config/nav";
+import { scrollToSection } from "../utils/scroll";
+import { buttonClasses } from "./ui/Button";
+import ThemeToggle from "./theme/ThemeToggle";
 
 export default function NavBar() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -12,15 +16,14 @@ export default function NavBar() {
 
 	const scrollTo = (id: string) => {
 		setIsOpen(false);
-		if (pathname !== "/") {
-			window.location.href = `/#${id}`;
-			return;
-		}
-		document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+		scrollToSection(id, pathname);
 	};
 
+	const linkClasses =
+		"text-ink-muted hover:text-ink px-3 py-2 rounded-lg text-base font-medium hover:bg-surface-2 transition-colors";
+
 	return (
-		<nav className="bg-gray-900/80 backdrop-blur-md border-b border-gray-800/50">
+		<nav className="bg-surface/80 backdrop-blur-md border-b border-border">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex items-center justify-between h-16">
 					<div className="flex items-center">
@@ -32,7 +35,7 @@ export default function NavBar() {
 								height={32}
 								className="rounded-full"
 							/>
-							<span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+							<span className="font-display text-xl font-bold text-primary">
 								Bluff Stuff
 							</span>
 						</Link>
@@ -41,33 +44,22 @@ export default function NavBar() {
 					{/* Desktop menu */}
 					<div className="hidden md:block">
 						<div className="ml-10 flex items-center space-x-1">
-							<Link
-								href="/"
-								className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/5 transition-all"
-							>
+							<Link href="/" className={linkClasses}>
 								Home
 							</Link>
-							<button
-								onClick={() => scrollTo("events")}
-								className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/5 transition-all"
-							>
-								Events
-							</button>
-							<button
-								onClick={() => scrollTo("committee")}
-								className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/5 transition-all"
-							>
-								Committee
-							</button>
-							<button
-								onClick={() => scrollTo("contact")}
-								className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/5 transition-all"
-							>
-								Contact
-							</button>
+							{NAV_LINKS.map(({ id, label }) => (
+								<button
+									key={id}
+									onClick={() => scrollTo(id)}
+									className={linkClasses}
+								>
+									{label}
+								</button>
+							))}
+							<ThemeToggle />
 							<SignedOut>
 								<SignInButton mode="modal">
-									<button className="ml-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors text-sm">
+									<button className={buttonClasses("primary", "md", "ml-2")}>
 										Sign In
 									</button>
 								</SignInButton>
@@ -76,14 +68,7 @@ export default function NavBar() {
 								<UserButton
 									afterSignOutUrl="/"
 									appearance={{
-										elements: {
-											avatarBox: "w-9 h-9",
-											userButtonPopoverCard:
-												"bg-gray-900 border border-gray-700",
-											userButtonPopoverActionButton: "hover:bg-gray-800",
-											userButtonPopoverActionButtonText: "text-white",
-											userButtonPopoverFooter: "hidden"
-										}
+										elements: { avatarBox: "w-9 h-9" }
 									}}
 								/>
 							</SignedIn>
@@ -91,26 +76,21 @@ export default function NavBar() {
 					</div>
 
 					{/* Mobile menu button */}
-					<div className="md:hidden flex items-center gap-3">
+					<div className="md:hidden flex items-center gap-2">
+						<ThemeToggle />
 						<SignedIn>
 							<UserButton
 								afterSignOutUrl="/"
 								appearance={{
-									elements: {
-										avatarBox: "w-8 h-8",
-										userButtonPopoverCard:
-											"bg-gray-900 border border-gray-700",
-										userButtonPopoverActionButton: "hover:bg-gray-800",
-										userButtonPopoverActionButtonText: "text-white",
-										userButtonPopoverFooter: "hidden"
-									}
+									elements: { avatarBox: "w-8 h-8" }
 								}}
 							/>
 						</SignedIn>
 						<button
 							onClick={() => setIsOpen(!isOpen)}
-							className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+							className="inline-flex items-center justify-center p-2 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors"
 							aria-label="Toggle menu"
+							aria-expanded={isOpen}
 						>
 							{!isOpen ? (
 								<svg
@@ -118,6 +98,7 @@ export default function NavBar() {
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
+									aria-hidden="true"
 								>
 									<path
 										strokeLinecap="round"
@@ -132,6 +113,7 @@ export default function NavBar() {
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
+									aria-hidden="true"
 								>
 									<path
 										strokeLinecap="round"
@@ -148,37 +130,28 @@ export default function NavBar() {
 
 			{/* Mobile menu */}
 			{isOpen && (
-				<div className="md:hidden border-t border-gray-800/50">
+				<div className="md:hidden border-t border-border bg-surface">
 					<div className="px-4 pt-3 pb-4 space-y-1">
 						<Link
 							href="/"
 							onClick={() => setIsOpen(false)}
-							className="text-gray-300 hover:text-white block px-3 py-2.5 rounded-lg text-base font-medium hover:bg-white/5 transition-all"
+							className={`${linkClasses} block`}
 						>
 							Home
 						</Link>
-						<button
-							onClick={() => scrollTo("events")}
-							className="text-gray-300 hover:text-white block w-full text-left px-3 py-2.5 rounded-lg text-base font-medium hover:bg-white/5 transition-all"
-						>
-							Events
-						</button>
-						<button
-							onClick={() => scrollTo("committee")}
-							className="text-gray-300 hover:text-white block w-full text-left px-3 py-2.5 rounded-lg text-base font-medium hover:bg-white/5 transition-all"
-						>
-							Committee
-						</button>
-						<button
-							onClick={() => scrollTo("contact")}
-							className="text-gray-300 hover:text-white block w-full text-left px-3 py-2.5 rounded-lg text-base font-medium hover:bg-white/5 transition-all"
-						>
-							Contact
-						</button>
+						{NAV_LINKS.map(({ id, label }) => (
+							<button
+								key={id}
+								onClick={() => scrollTo(id)}
+								className={`${linkClasses} block w-full text-left`}
+							>
+								{label}
+							</button>
+						))}
 						<SignedOut>
 							<div className="pt-2">
 								<SignInButton mode="modal">
-									<button className="w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors">
+									<button className={buttonClasses("primary", "md", "w-full")}>
 										Sign In
 									</button>
 								</SignInButton>

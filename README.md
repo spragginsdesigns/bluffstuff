@@ -4,7 +4,7 @@ Community hub for **Woodward Bluffs Mobile Home Park** residents — events, RSV
 
 **Live:** https://bluffstuff.vercel.app
 
-**Stack:** Next.js 14 (App Router) · Clerk (Google SSO) · Convex (real-time DB + file storage) · Tailwind + NextUI · Framer Motion · nodemailer (Gmail) · OpenAI gpt-image-2 (flyer art)
+**Stack:** Next.js 14 (App Router) · Clerk (Google SSO) · Convex (real-time DB + file storage) · Tailwind (design tokens, light/dark themes) · Framer Motion · nodemailer (Gmail) · OpenAI gpt-image-2 (flyer art)
 
 ---
 

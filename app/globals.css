@@ -2,49 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design tokens — single source of truth for the site's two themes.
+ * Values are RGB triplets so Tailwind's `rgb(var(--x) / <alpha-value>)`
+ * mapping (tailwind.config.ts) supports opacity modifiers.
+ *
+ * Pairing rules (all combos verified ≥ 4.5:1 in both themes):
+ *   - solid `primary` / `accent` fills take `*-fg` text
+ *   - `*-soft` tint backgrounds take `*-strong` text
+ *   - `ink-faint` is for metadata only, never body copy
+ */
 :root {
-	--primary: #4a8e3c;
-	--primary-dark: #3a7030;
-	--secondary: #1d1f1e;
-	--secondary-dark: #020202;
-	--background-start: #131111;
-	--background-end: #1b1520;
-	--text: #ffffff;
-	--text-muted: #9ca3af;
-	--accent: #ffa500;
+	color-scheme: light;
+	--bg: 250 246 239; /* #FAF6EF warm cream */
+	--surface: 255 255 255;
+	--surface-2: 243 236 225; /* #F3ECE1 insets, hovers, calendar cells */
+	--border: 228 218 203; /* #E4DACB */
+	--ink: 46 38 32; /* #2E2620 */
+	--ink-muted: 93 83 72; /* #5D5348 */
+	--ink-faint: 122 110 96; /* #7A6E60 */
+	--primary: 181 67 35; /* #B54323 terracotta */
+	--primary-strong: 154 55 28; /* #9A371C */
+	--primary-soft: 246 227 219; /* #F6E3DB */
+	--primary-fg: 255 255 255;
+	--accent: 90 111 78; /* #5A6F4E sage */
+	--accent-strong: 72 89 62; /* #48593E */
+	--accent-soft: 231 237 224; /* #E7EDE0 */
+	--accent-fg: 255 255 255;
+	--danger: 179 38 30; /* #B3261E */
+	--danger-soft: 248 224 222;
+	--ring: 181 67 35;
+}
+
+.dark {
+	color-scheme: dark;
+	--bg: 33 28 24; /* #211C18 warm charcoal */
+	--surface: 43 37 32; /* #2B2520 */
+	--surface-2: 53 46 39; /* #352E27 */
+	--border: 69 60 51; /* #453C33 */
+	--ink: 244 237 227; /* #F4EDE3 */
+	--ink-muted: 207 196 182; /* #CFC4B6 */
+	--ink-faint: 167 152 133; /* #A79885 */
+	--primary: 224 113 74; /* #E0714A */
+	--primary-strong: 233 138 104; /* #E98A68 */
+	--primary-soft: 74 43 30; /* #4A2B1E */
+	--primary-fg: 33 28 24; /* dark text on the lighter terracotta */
+	--accent: 157 179 136; /* #9DB388 */
+	--accent-strong: 178 197 160; /* #B2C5A0 */
+	--accent-soft: 44 53 38; /* #2C3526 */
+	--accent-fg: 33 28 24;
+	--danger: 240 138 128;
+	--danger-soft: 74 32 29;
+	--ring: 224 113 74;
 }
 
 body {
-	color: var(--text);
-	background: linear-gradient(
-		135deg,
-		var(--background-start),
-		var(--background-end)
-	);
-	background-attachment: fixed;
+	@apply bg-bg text-ink;
+	font-size: 1.0625rem; /* 17px base — readability for older residents */
+	line-height: 1.6;
+}
+
+:focus-visible {
+	outline: 2px solid rgb(var(--ring));
+	outline-offset: 2px;
+}
+
+dialog {
+	background: transparent;
+	padding: 0;
+	max-width: none;
+	max-height: none;
+}
+
+dialog::backdrop {
+	background: rgb(0 0 0 / 0.5);
+	backdrop-filter: blur(4px);
 }
 
 @media print {
 	body {
 		background: #ffffff !important;
 		color: #111111 !important;
-	}
-}
-
-@layer components {
-	.btn-primary {
-		@apply bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded transition duration-300 shadow-md hover:shadow-lg;
-	}
-
-	.btn-secondary {
-		@apply bg-secondary hover:bg-secondary-dark text-white font-bold py-2 px-4 rounded transition duration-300 shadow-md hover:shadow-lg;
-	}
-
-	.card {
-		@apply bg-secondary bg-opacity-80 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition duration-300;
-	}
-
-	.section-title {
-		@apply text-3xl font-bold mb-8 text-primary;
 	}
 }

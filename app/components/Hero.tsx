@@ -7,6 +7,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ConvexEvent } from "@/types/Event";
 import RsvpModal from "./RsvpModal";
+import Button from "./ui/Button";
+import { scrollToSection } from "../utils/scroll";
 
 interface HeroProps {
 	nextEvent: ConvexEvent | null;
@@ -17,7 +19,13 @@ const quickActions = [
 		label: "See Events",
 		target: "events",
 		icon: (
-			<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<svg
+				className="w-6 h-6"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				aria-hidden="true"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -31,7 +39,13 @@ const quickActions = [
 		label: "This Month",
 		target: "calendar",
 		icon: (
-			<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<svg
+				className="w-6 h-6"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				aria-hidden="true"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -45,7 +59,13 @@ const quickActions = [
 		label: "Suggest an Event",
 		target: "contact",
 		icon: (
-			<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<svg
+				className="w-6 h-6"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				aria-hidden="true"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -59,7 +79,13 @@ const quickActions = [
 		label: "Volunteer",
 		target: "committee",
 		icon: (
-			<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<svg
+				className="w-6 h-6"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				aria-hidden="true"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -78,18 +104,13 @@ export default function Hero({ nextEvent }: HeroProps) {
 		nextEvent ? { eventId: nextEvent._id } : "skip"
 	);
 
-	const scrollTo = (id: string) => {
-		document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-	};
-
 	const eventDate = nextEvent ? new Date(nextEvent.date + "T00:00:00") : null;
 
 	return (
 		<section className="relative w-full overflow-hidden pt-16 pb-10 md:pt-24 md:pb-16">
-			{/* Warm background glow */}
-			<div className="absolute -top-24 -left-24 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl" />
-			<div className="absolute top-40 right-0 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl" />
-			<div className="absolute bottom-0 left-1/3 w-72 h-72 bg-cyan-500/5 rounded-full blur-3xl" />
+			{/* Soft warm background washes */}
+			<div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+			<div className="absolute top-40 right-0 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
 
 			<div className="container mx-auto px-4 relative z-10">
 				<div className="flex flex-col lg:flex-row lg:items-center gap-10 lg:gap-14">
@@ -99,7 +120,7 @@ export default function Hero({ nextEvent }: HeroProps) {
 							initial={{ opacity: 0, y: 16 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.5 }}
-							className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6"
+							className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-border shadow-card mb-6"
 						>
 							<Image
 								src="/logo.png"
@@ -108,7 +129,7 @@ export default function Hero({ nextEvent }: HeroProps) {
 								height={22}
 								className="rounded-full"
 							/>
-							<span className="text-sm text-gray-300 font-medium">
+							<span className="text-sm text-ink-muted font-medium">
 								Woodward Bluffs Activities Committee
 							</span>
 						</motion.div>
@@ -117,20 +138,17 @@ export default function Hero({ nextEvent }: HeroProps) {
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.6 }}
-							className="text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold leading-tight mb-5 text-white"
+							className="font-display text-4xl md:text-5xl lg:text-[3.4rem] font-bold leading-tight mb-5 text-ink"
 						>
 							What&apos;s happening at{" "}
-							<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400">
-								Woodward Bluffs
-							</span>
-							?
+							<span className="text-primary">Woodward Bluffs</span>?
 						</motion.h1>
 
 						<motion.p
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.6, delay: 0.1 }}
-							className="text-lg md:text-xl mb-8 text-gray-300 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+							className="text-lg md:text-xl mb-8 text-ink-muted max-w-xl mx-auto lg:mx-0 leading-relaxed"
 						>
 							Potlucks, parties, and get-togethers with your neighbors — find an
 							event, RSVP in seconds, and we&apos;ll save you a seat.
@@ -146,10 +164,10 @@ export default function Hero({ nextEvent }: HeroProps) {
 							{quickActions.map((action) => (
 								<button
 									key={action.label}
-									onClick={() => scrollTo(action.target)}
-									className="flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 text-gray-200 hover:bg-white/10 hover:border-purple-400/40 hover:text-white transition-all duration-200 min-h-[92px]"
+									onClick={() => scrollToSection(action.target)}
+									className="flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-2xl bg-surface border border-border shadow-card text-ink-muted hover:border-primary/40 hover:text-ink hover:shadow-lifted transition-all duration-200 min-h-[92px]"
 								>
-									<span className="text-purple-300">{action.icon}</span>
+									<span className="text-primary">{action.icon}</span>
 									<span className="text-sm font-semibold leading-tight text-center">
 										{action.label}
 									</span>
@@ -158,45 +176,57 @@ export default function Hero({ nextEvent }: HeroProps) {
 						</motion.div>
 					</div>
 
-					{/* Right: next event card */}
+					{/* Right: park photo + next event card */}
 					<motion.div
 						initial={{ opacity: 0, y: 24 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ duration: 0.6, delay: 0.15 }}
 						className="w-full lg:w-1/2"
 					>
-						{nextEvent && eventDate ? (
-							<div className="relative max-w-lg mx-auto lg:ml-auto">
-								<div className="absolute -inset-1 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-3xl blur-lg" />
-								<div className="relative bg-gray-900/80 backdrop-blur-xl rounded-3xl border border-white/10 p-6 md:p-7 shadow-2xl">
+						<div className="max-w-lg mx-auto lg:ml-auto">
+							<div className="rounded-3xl border border-border shadow-lifted overflow-hidden">
+								<Image
+									src="/images/wwb-heroimage.jpg"
+									alt="Woodward Bluffs Mobile Home Park on a sunny day, with tree-lined streets and mountains in the distance"
+									width={1211}
+									height={844}
+									priority
+									sizes="(max-width: 1024px) 100vw, 50vw"
+									className="w-full h-52 md:h-64 lg:h-72 object-cover object-[center_42%]"
+								/>
+							</div>
+
+							{nextEvent && eventDate ? (
+								<div className="relative bg-surface rounded-3xl border border-border shadow-lifted p-6 md:p-7 -mt-14 mx-4 md:mx-6">
 									<div className="flex items-start justify-between gap-4 mb-4">
 										<div>
-											<p className="text-xs font-bold tracking-widest uppercase text-cyan-400 mb-2">
+											<p className="text-xs font-bold tracking-widest uppercase text-accent-strong mb-2">
 												Next Event
 											</p>
-											<h2 className="text-2xl md:text-3xl font-bold text-white leading-snug">
+											<h2 className="font-display text-2xl md:text-3xl font-bold text-ink leading-snug">
 												{nextEvent.title}
 											</h2>
 										</div>
-										<div className="flex-shrink-0 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl px-4 py-3 text-center shadow-lg shadow-purple-500/20">
-											<div className="text-xs text-purple-100 font-semibold uppercase leading-none mb-1">
+										<div className="flex-shrink-0 bg-primary rounded-2xl px-4 py-3 text-center shadow-card">
+											<div className="text-xs text-primary-fg/90 font-semibold uppercase leading-none mb-1">
 												{eventDate.toLocaleDateString("en-US", {
 													month: "short"
 												})}
 											</div>
-											<div className="text-3xl text-white font-extrabold leading-none">
+											<div className="text-3xl text-primary-fg font-extrabold leading-none">
 												{eventDate.getDate()}
 											</div>
 										</div>
 									</div>
 
 									<div className="space-y-2 mb-5">
-										<div className="flex items-center gap-2.5 text-gray-200">
+										<div className="flex items-center gap-2.5 text-ink-muted">
 											<svg
-												className="w-5 h-5 text-purple-400 flex-shrink-0"
+												className="w-5 h-5 text-primary flex-shrink-0"
 												fill="none"
 												viewBox="0 0 24 24"
 												stroke="currentColor"
+												aria-hidden="true"
 											>
 												<path
 													strokeLinecap="round"
@@ -214,12 +244,13 @@ export default function Hero({ nextEvent }: HeroProps) {
 												at {nextEvent.time}
 											</span>
 										</div>
-										<div className="flex items-center gap-2.5 text-gray-200">
+										<div className="flex items-center gap-2.5 text-ink-muted">
 											<svg
-												className="w-5 h-5 text-pink-400 flex-shrink-0"
+												className="w-5 h-5 text-primary flex-shrink-0"
 												fill="none"
 												viewBox="0 0 24 24"
 												stroke="currentColor"
+												aria-hidden="true"
 											>
 												<path
 													strokeLinecap="round"
@@ -237,12 +268,13 @@ export default function Hero({ nextEvent }: HeroProps) {
 											<span className="text-base">{nextEvent.location}</span>
 										</div>
 										{rsvpCount !== undefined && rsvpCount > 0 && (
-											<div className="flex items-center gap-2.5 text-gray-200">
+											<div className="flex items-center gap-2.5 text-ink-muted">
 												<svg
-													className="w-5 h-5 text-cyan-400 flex-shrink-0"
+													className="w-5 h-5 text-accent-strong flex-shrink-0"
 													fill="none"
 													viewBox="0 0 24 24"
 													stroke="currentColor"
+													aria-hidden="true"
 												>
 													<path
 														strokeLinecap="round"
@@ -261,53 +293,52 @@ export default function Hero({ nextEvent }: HeroProps) {
 									</div>
 
 									<div className="flex flex-col sm:flex-row gap-3">
-										<button
+										<Button
 											onClick={() => setIsRsvpOpen(true)}
-											className="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3.5 px-6 rounded-xl text-base transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25"
+											className="flex-1"
 										>
 											RSVP Now
-										</button>
-										<button
-											onClick={() => scrollTo("events")}
-											className="flex-1 sm:flex-initial bg-white/5 border border-white/10 text-white font-semibold py-3.5 px-6 rounded-xl text-base hover:bg-white/10 transition-all duration-300"
+										</Button>
+										<Button
+											variant="outline"
+											onClick={() => scrollToSection("events")}
+											className="flex-1 sm:flex-initial"
 										>
 											All Events
-										</button>
+										</Button>
 									</div>
 								</div>
-							</div>
-						) : (
-							<div className="max-w-lg mx-auto lg:ml-auto bg-gray-900/60 backdrop-blur-xl rounded-3xl border border-white/10 p-8 text-center">
-								<div className="w-14 h-14 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-									<svg
-										className="w-7 h-7 text-purple-300"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={1.8}
-											d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-										/>
-									</svg>
+							) : (
+								<div className="relative bg-surface rounded-3xl border border-border shadow-lifted p-8 -mt-14 mx-4 md:mx-6 text-center">
+									<div className="w-14 h-14 mx-auto mb-4 rounded-full bg-primary-soft flex items-center justify-center">
+										<svg
+											className="w-7 h-7 text-primary-strong"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											aria-hidden="true"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={1.8}
+												d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+											/>
+										</svg>
+									</div>
+									<h2 className="font-display text-xl font-bold text-ink mb-2">
+										New events are in the works!
+									</h2>
+									<p className="text-ink-muted mb-5">
+										Have an idea for the next get-together? We&apos;d love to
+										hear it.
+									</p>
+									<Button onClick={() => scrollToSection("contact")}>
+										Suggest an Event
+									</Button>
 								</div>
-								<h2 className="text-xl font-bold text-white mb-2">
-									New events are in the works!
-								</h2>
-								<p className="text-gray-400 mb-5">
-									Have an idea for the next get-together? We&apos;d love to hear
-									it.
-								</p>
-								<button
-									onClick={() => scrollTo("contact")}
-									className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 px-7 rounded-xl transition-all duration-300"
-								>
-									Suggest an Event
-								</button>
-							</div>
-						)}
+							)}
+						</div>
 					</motion.div>
 				</div>
 			</div>

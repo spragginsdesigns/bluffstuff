@@ -9,9 +9,12 @@ import MonthlyCalendar from "./components/MonthlyCalendar";
 import CommitteeDashboard from "./components/CommitteeDashboard";
 import FAQ from "./components/FAQ";
 import ContactForm from "./components/ContactForm";
+import Button from "./components/ui/Button";
 import { ConvexEvent } from "../types/Event";
 import { motion } from "framer-motion";
 import { useIsCommittee } from "./hooks/useIsCommittee";
+import { COMMITTEE_MEMBERS } from "./data/committee";
+import { scrollToSection } from "./utils/scroll";
 
 const EVENTS_PREVIEW_COUNT = 6;
 
@@ -26,14 +29,10 @@ export default function Home() {
 	if (!isLoaded) {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
-				<div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+				<div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
 			</div>
 		);
 	}
-
-	const scrollToContact = () => {
-		document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-	};
 
 	const hasMoreEvents = upcomingEvents.length > EVENTS_PREVIEW_COUNT;
 	const visibleEvents = showAllEvents
@@ -55,24 +54,28 @@ export default function Home() {
 				{isCommittee && <CommitteeDashboard />}
 
 				{/* Events Section */}
-				<section id="events" className="container mx-auto px-4 py-12 md:py-16 scroll-mt-20">
+				<section
+					id="events"
+					className="container mx-auto px-4 py-12 md:py-16 scroll-mt-20"
+				>
 					<div className="text-center mb-8">
-						<h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+						<h2 className="font-display text-3xl md:text-4xl font-semibold text-ink">
 							Upcoming Events
 						</h2>
-						<p className="text-gray-400 mt-2 text-base md:text-lg">
+						<p className="text-ink-muted mt-2 text-base md:text-lg">
 							Don&apos;t miss out on community gatherings
 						</p>
 					</div>
 
 					{upcomingEvents.length === 0 ? (
 						<div className="text-center py-12">
-							<div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
+							<div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-2 flex items-center justify-center">
 								<svg
-									className="w-8 h-8 text-gray-500"
+									className="w-8 h-8 text-ink-faint"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
+									aria-hidden="true"
 								>
 									<path
 										strokeLinecap="round"
@@ -82,10 +85,10 @@ export default function Home() {
 									/>
 								</svg>
 							</div>
-							<p className="text-gray-400 text-lg">
+							<p className="text-ink-muted text-lg">
 								No upcoming events right now
 							</p>
-							<p className="text-gray-500 text-sm mt-1">
+							<p className="text-ink-faint text-base mt-1">
 								Check back soon — we&apos;re always planning something fun!
 							</p>
 						</div>
@@ -106,23 +109,21 @@ export default function Home() {
 
 							{hasMoreEvents && (
 								<div className="flex justify-center mt-8">
-									<button
+									<Button
+										variant="outline"
 										onClick={() => {
 											if (showAllEvents) {
 												setShowAllEvents(false);
-												document
-													.getElementById("events")
-													?.scrollIntoView({ behavior: "smooth" });
+												scrollToSection("events");
 											} else {
 												setShowAllEvents(true);
 											}
 										}}
-										className="px-6 py-2.5 rounded-xl border border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-300 text-sm font-medium"
 									>
 										{showAllEvents
 											? "Show Less"
 											: `Show More Events (${hiddenCount} more)`}
-									</button>
+									</Button>
 								</div>
 							)}
 						</>
@@ -130,101 +131,82 @@ export default function Home() {
 				</section>
 
 				{/* Monthly Calendar */}
-				<section id="calendar" className="container mx-auto px-4 py-8 md:py-12 scroll-mt-20">
-					<div className="bg-gray-800/30 backdrop-blur-sm rounded-3xl p-5 md:p-8 border border-gray-700/50 max-w-4xl mx-auto">
-						<h2 className="text-3xl md:text-4xl font-bold mb-2 text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+				<section
+					id="calendar"
+					className="container mx-auto px-4 py-8 md:py-12 scroll-mt-20"
+				>
+					<div className="bg-surface-2/60 rounded-3xl p-5 md:p-8 border border-border max-w-4xl mx-auto">
+						<h2 className="font-display text-3xl md:text-4xl font-semibold mb-2 text-center text-ink">
 							This Month at the Bluffs
 						</h2>
-						<p className="text-gray-400 text-center mb-6 text-base">
+						<p className="text-ink-muted text-center mb-6 text-base">
 							Tap a day or an event to see the details
 						</p>
 						<MonthlyCalendar
 							events={upcomingEvents as ConvexEvent[]}
 							onEventClick={() => {
-								document
-									.getElementById("events")
-									?.scrollIntoView({ behavior: "smooth" });
+								scrollToSection("events");
 							}}
 						/>
 					</div>
 				</section>
 
 				{/* About the Committee */}
-				<section
-					id="committee"
-					className="py-12 md:py-16 bg-gradient-to-br from-gray-900/50 to-gray-800/50 scroll-mt-20"
-				>
+				<section id="committee" className="py-12 md:py-16 scroll-mt-20">
 					<div className="container mx-auto px-4 max-w-4xl">
-						<h2 className="text-3xl md:text-4xl font-bold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+						<h2 className="font-display text-3xl md:text-4xl font-semibold mb-4 text-center text-ink">
 							Meet Your Activities Committee
 						</h2>
-						<p className="text-gray-300 text-center mb-10 max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
+						<p className="text-ink-muted text-center mb-10 max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
 							We&apos;re your neighbors — and we love bringing the community
 							together through fun events and activities. Say hi when you see
 							us around the park!
 						</p>
 
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-							{[
-								{
-									name: "Kim Anderson",
-									role: "Committee Leader",
-									desc: "Leads the committee and keeps everything running smoothly — the heart of our events"
-								},
-								{
-									name: "Austin Spraggins",
-									role: "Treasurer",
-									desc: "Manages the budget so we can throw the best events possible"
-								},
-								{
-									name: "Donnalee",
-									role: "Committee Member",
-									desc: "Our go-to helper — always stepping up wherever she's needed"
-								}
-							].map((member, index) => (
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+							{COMMITTEE_MEMBERS.map((member, index) => (
 								<motion.div
 									key={member.name}
 									initial={{ opacity: 0, y: 15 }}
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ delay: index * 0.1 }}
-									className="p-5 rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-purple-500/30 transition-all duration-300"
+									className="p-5 rounded-2xl bg-surface border border-border shadow-card hover:border-primary/40 transition-all duration-300"
 								>
 									<div className="flex items-center gap-3 mb-2">
-										<div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+										<div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-primary-fg font-bold text-lg flex-shrink-0">
 											{member.name.charAt(0)}
 										</div>
 										<div>
-											<h3 className="text-white font-semibold text-base">
+											<h3 className="text-ink font-semibold text-base">
 												{member.name}
 											</h3>
-											<p className="text-cyan-400 text-sm font-medium">
+											<p className="text-accent-strong text-sm font-medium">
 												{member.role}
 											</p>
 										</div>
 									</div>
-									<p className="text-gray-400 text-sm">{member.desc}</p>
+									<p className="text-ink-muted text-sm">
+										{member.description}
+									</p>
 								</motion.div>
 							))}
 						</div>
 
 						{/* Join CTA */}
-						<div className="text-center bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl p-6 md:p-8 border border-purple-500/20">
-							<h3 className="text-xl md:text-2xl font-bold text-white mb-3">
+						<div className="text-center bg-primary-soft rounded-2xl p-6 md:p-8 border border-primary/20">
+							<h3 className="font-display text-xl md:text-2xl font-bold text-ink mb-3">
 								Want to Join the Committee?
 							</h3>
-							<p className="text-gray-300 mb-2 text-sm md:text-base">
-								We&apos;re always looking for enthusiastic residents to help plan
-								events and make our community even better!
+							<p className="text-ink-muted mb-2 text-sm md:text-base">
+								We&apos;re always looking for enthusiastic residents to help
+								plan events and make our community even better!
 							</p>
-							<p className="text-gray-400 text-sm mb-6">
+							<p className="text-ink-muted text-sm mb-6">
 								Meetings are held the first Monday of every month.
 							</p>
-							<button
-								onClick={scrollToContact}
-								className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:from-purple-600 hover:to-pink-700 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/25"
-							>
+							<Button onClick={() => scrollToSection("contact")}>
 								Get in Touch
-							</button>
+							</Button>
 						</div>
 					</div>
 				</section>

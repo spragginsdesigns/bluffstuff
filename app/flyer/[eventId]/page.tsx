@@ -6,6 +6,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useIsCommittee } from "../../hooks/useIsCommittee";
+import Button, { buttonClasses } from "../../components/ui/Button";
 
 /**
  * Shows the generated flyer PNG (same image that gets emailed to the
@@ -59,7 +60,7 @@ export default function EventFlyerPage() {
 
 	if (event === undefined) {
 		return (
-			<div className="min-h-screen flex items-center justify-center text-gray-400">
+			<div className="min-h-screen flex items-center justify-center text-ink-muted">
 				Loading flyer…
 			</div>
 		);
@@ -67,7 +68,7 @@ export default function EventFlyerPage() {
 
 	if (event === null) {
 		return (
-			<div className="min-h-screen flex items-center justify-center text-gray-400">
+			<div className="min-h-screen flex items-center justify-center text-ink-muted">
 				Event not found.
 			</div>
 		);
@@ -83,61 +84,60 @@ export default function EventFlyerPage() {
 		<div className="min-h-screen flex flex-col items-center py-10 print:py-0">
 			{/* Screen-only helper bar */}
 			<div className="print:hidden mb-8 text-center px-4">
-				<h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+				<h1 className="font-display text-2xl md:text-3xl font-bold text-ink mb-2">
 					{event.title} — Flyer
 				</h1>
-				<p className="text-gray-400 mb-5 max-w-md mx-auto">
+				<p className="text-ink-muted mb-5 max-w-md mx-auto">
 					Print this flyer and post it around the park. The QR code takes
 					residents to the website to see details and RSVP.
 				</p>
 				<div className="flex flex-wrap justify-center gap-3">
-					<button
-						onClick={() => window.print()}
-						className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold hover:from-purple-600 hover:to-pink-700 transition-all duration-200"
-					>
+					<Button onClick={() => window.print()} size="lg">
 						Print This Page
-					</button>
+					</Button>
 					<a
 						href={flyerUrl}
 						download={flyerFilename}
-						className="px-8 py-3 rounded-xl bg-gray-700 text-white font-bold hover:bg-gray-600 transition-all duration-200"
+						className={buttonClasses("outline", "lg")}
 					>
 						Download
 					</a>
 					{isCommittee && (
-						<button
+						<Button
+							variant="outline"
+							size="lg"
 							onClick={handleEmailFlyer}
 							disabled={emailStatus === "sending" || emailStatus === "sent"}
-							className="px-8 py-3 rounded-xl bg-gray-700 text-white font-bold hover:bg-gray-600 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
 						>
 							{emailStatus === "sending"
 								? "Sending…"
 								: emailStatus === "sent"
 									? "Emailed ✓"
 									: "Email to the Printer"}
-						</button>
+						</Button>
 					)}
 					{isCommittee && (
-						<button
+						<Button
+							variant="outline"
+							size="lg"
 							onClick={handleGenerateArt}
 							disabled={artStatus === "generating"}
-							className="px-8 py-3 rounded-xl bg-gray-700 text-white font-bold hover:bg-gray-600 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
 						>
 							{artStatus === "generating"
 								? "Painting… (about a minute)"
 								: event.imageUrl
 									? "New Background Art"
 									: "Generate Background Art"}
-						</button>
+						</Button>
 					)}
 				</div>
 				{emailStatus === "error" && (
-					<p className="text-red-400 text-sm mt-3">
+					<p className="text-danger text-sm mt-3">
 						The email didn&apos;t send — try again in a minute.
 					</p>
 				)}
 				{artStatus === "error" && (
-					<p className="text-red-400 text-sm mt-3">
+					<p className="text-danger text-sm mt-3">
 						Art generation failed — try again in a minute.
 					</p>
 				)}

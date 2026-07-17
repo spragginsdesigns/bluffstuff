@@ -3,6 +3,7 @@
 import Image from "next/image";
 import QRCode from "react-qr-code";
 import { SITE_NAME, SITE_URL, SITE_URL_DISPLAY } from "../config/site";
+import Button from "../components/ui/Button";
 
 /**
  * Print-friendly QR poster for the clubhouse bulletin board.
@@ -14,19 +15,16 @@ export default function QrPosterPage() {
 		<div className="min-h-screen flex flex-col items-center py-10 print:py-0">
 			{/* Screen-only helper bar */}
 			<div className="print:hidden mb-8 text-center">
-				<h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+				<h1 className="font-display text-2xl md:text-3xl font-bold text-ink mb-2">
 					Clubhouse QR Poster
 				</h1>
-				<p className="text-gray-400 mb-5 max-w-md mx-auto">
+				<p className="text-ink-muted mb-5 max-w-md mx-auto">
 					Print this page and pin it up at the clubhouse so neighbors can find
 					the site by scanning the code.
 				</p>
-				<button
-					onClick={() => window.print()}
-					className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold hover:from-purple-600 hover:to-pink-700 transition-all duration-200"
-				>
+				<Button size="lg" onClick={() => window.print()}>
 					Print This Page
-				</button>
+				</Button>
 			</div>
 
 			{/* The poster itself — white card on screen, full page in print */}

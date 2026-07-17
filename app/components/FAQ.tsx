@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Button from "./ui/Button";
+import { scrollToSection } from "../utils/scroll";
 
 interface FAQItem {
 	question: string;
@@ -44,88 +46,81 @@ const faqs: FAQItem[] = [
 export default function FAQ() {
 	const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-	const scrollToContact = () => {
-		document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-	};
-
 	return (
-		<section
-			id="faq"
-			className="py-12 md:py-16 bg-gradient-to-br from-gray-900 to-gray-800 scroll-mt-20"
-		>
+		<section id="faq" className="py-12 md:py-16 scroll-mt-20">
 			<div className="container mx-auto px-4 max-w-4xl">
 				<div className="text-center mb-8 md:mb-12">
-					<h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
+					<h2 className="font-display text-3xl md:text-4xl font-semibold text-ink">
 						Common Questions
 					</h2>
-					<p className="text-gray-400 mt-2 text-base md:text-lg">
+					<p className="text-ink-muted mt-2 text-base md:text-lg">
 						Everything you might be wondering about
 					</p>
 				</div>
 
 				<div className="space-y-3">
-					{faqs.map((faq, index) => (
-						<motion.div
-							key={index}
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: index * 0.05 }}
-							className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden"
-						>
-							<button
-								onClick={() =>
-									setOpenIndex(openIndex === index ? null : index)
-								}
-								className="w-full px-5 py-4 text-left flex justify-between items-center hover:bg-gray-700/30 transition-colors duration-200"
+					{faqs.map((faq, index) => {
+						const isOpen = openIndex === index;
+						return (
+							<motion.div
+								key={index}
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ delay: index * 0.05 }}
+								className="bg-surface rounded-xl border border-border overflow-hidden shadow-card"
 							>
-								<span className="font-semibold text-gray-100 text-sm md:text-base pr-4">
-									{faq.question}
-								</span>
-								<motion.svg
-									animate={{ rotate: openIndex === index ? 180 : 0 }}
-									className="w-5 h-5 text-gray-400 flex-shrink-0"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
+								<button
+									onClick={() => setOpenIndex(isOpen ? null : index)}
+									aria-expanded={isOpen}
+									className="w-full px-5 py-4 text-left flex justify-between items-center hover:bg-surface-2 transition-colors duration-200"
 								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M19 9l-7 7-7-7"
-									/>
-								</motion.svg>
-							</button>
-
-							<AnimatePresence>
-								{openIndex === index && (
-									<motion.div
-										initial={{ height: 0, opacity: 0 }}
-										animate={{ height: "auto", opacity: 1 }}
-										exit={{ height: 0, opacity: 0 }}
-										transition={{ duration: 0.2 }}
-										className="overflow-hidden"
+									<span className="font-semibold text-ink text-base pr-4">
+										{faq.question}
+									</span>
+									<motion.svg
+										animate={{ rotate: isOpen ? 180 : 0 }}
+										className="w-5 h-5 text-ink-muted flex-shrink-0"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										aria-hidden="true"
 									>
-										<div className="px-5 py-4 border-t border-gray-700 text-gray-400 text-sm md:text-base">
-											{faq.answer}
-										</div>
-									</motion.div>
-								)}
-							</AnimatePresence>
-						</motion.div>
-					))}
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M19 9l-7 7-7-7"
+										/>
+									</motion.svg>
+								</button>
+
+								<AnimatePresence>
+									{isOpen && (
+										<motion.div
+											initial={{ height: 0, opacity: 0 }}
+											animate={{ height: "auto", opacity: 1 }}
+											exit={{ height: 0, opacity: 0 }}
+											transition={{ duration: 0.2 }}
+											className="overflow-hidden"
+										>
+											<div className="px-5 py-4 border-t border-border text-ink-muted text-base">
+												{faq.answer}
+											</div>
+										</motion.div>
+									)}
+								</AnimatePresence>
+							</motion.div>
+						);
+					})}
 				</div>
 
 				<div className="mt-10 text-center">
-					<p className="text-gray-400 mb-4 text-sm md:text-base">
+					<p className="text-ink-muted mb-4 text-base">
 						Still have questions? We&apos;re here to help!
 					</p>
-					<button
-						onClick={scrollToContact}
-						className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25"
-					>
+					<Button onClick={() => scrollToSection("contact")}>
 						Contact Us
-					</button>
+					</Button>
 				</div>
 			</div>
 		</section>

@@ -90,23 +90,45 @@ export default function MonthlyCalendar({
 			<div className="flex items-center justify-between mb-6">
 				<button
 					onClick={() => navigateMonth(-1)}
-					className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
+					className="p-2 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors"
 					aria-label="Previous month"
 				>
-					<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+					<svg
+						className="w-6 h-6"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						aria-hidden="true"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={2}
+							d="M15 19l-7-7 7-7"
+						/>
 					</svg>
 				</button>
-				<h3 className="text-xl md:text-2xl font-bold text-white">
+				<h3 className="font-display text-xl md:text-2xl font-bold text-ink">
 					{MONTHS[currentMonth]} {currentYear}
 				</h3>
 				<button
 					onClick={() => navigateMonth(1)}
-					className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
+					className="p-2 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors"
 					aria-label="Next month"
 				>
-					<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+					<svg
+						className="w-6 h-6"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						aria-hidden="true"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={2}
+							d="M9 5l7 7-7 7"
+						/>
 					</svg>
 				</button>
 			</div>
@@ -117,7 +139,7 @@ export default function MonthlyCalendar({
 				{DAYS.map((day) => (
 					<div
 						key={day}
-						className="text-center text-xs md:text-sm font-medium text-gray-400 py-2"
+						className="text-center text-xs md:text-sm font-medium text-ink-muted py-2"
 					>
 						{day}
 					</div>
@@ -140,10 +162,10 @@ export default function MonthlyCalendar({
 							whileHover={dayEvents ? { scale: 1.05 } : {}}
 							className={`aspect-square rounded-lg flex flex-col items-center justify-center relative text-sm md:text-base transition-colors ${
 								isToday
-									? "bg-purple-500/20 border border-purple-500/50"
+									? "ring-2 ring-primary bg-primary-soft"
 									: dayEvents
-										? "bg-gray-700/50 cursor-pointer hover:bg-gray-600/50"
-										: "text-gray-500"
+										? "bg-primary-soft cursor-pointer hover:bg-primary-soft/70"
+										: "text-ink-faint"
 							}`}
 							onClick={() => {
 								if (dayEvents && dayEvents.length > 0) {
@@ -154,9 +176,9 @@ export default function MonthlyCalendar({
 							<span
 								className={`${
 									isToday
-										? "text-purple-300 font-bold"
+										? "text-primary-strong font-bold"
 										: dayEvents
-											? "text-white font-medium"
+											? "text-primary-strong font-medium"
 											: ""
 								}`}
 							>
@@ -167,7 +189,7 @@ export default function MonthlyCalendar({
 									{dayEvents.slice(0, 3).map((_, idx) => (
 										<div
 											key={idx}
-											className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"
+											className="w-1.5 h-1.5 rounded-full bg-primary"
 										/>
 									))}
 								</div>
@@ -187,7 +209,7 @@ export default function MonthlyCalendar({
 						exit={{ opacity: 0, y: -10 }}
 						className="space-y-3"
 					>
-						<h4 className="text-lg font-semibold text-gray-300 mb-4">
+						<h4 className="text-lg font-semibold text-ink mb-4">
 							Events This Month
 						</h4>
 						{monthEvents.map((event) => {
@@ -197,32 +219,33 @@ export default function MonthlyCalendar({
 									key={event._id}
 									onClick={() => onEventClick(event)}
 									whileHover={{ x: 4 }}
-									className="w-full text-left p-4 rounded-xl bg-gray-800/50 border border-gray-700 hover:border-purple-500/50 transition-all group"
+									className="w-full text-left p-4 rounded-xl bg-surface border border-border hover:border-primary/50 transition-all group"
 								>
 									<div className="flex items-center gap-4">
-										<div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex flex-col items-center justify-center border border-purple-500/30">
-											<span className="text-xs text-purple-300 font-medium leading-none">
+										<div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-soft flex flex-col items-center justify-center">
+											<span className="text-xs text-primary-strong font-medium leading-none">
 												{eventDate.toLocaleDateString("en-US", {
 													month: "short"
 												})}
 											</span>
-											<span className="text-lg text-white font-bold leading-none">
+											<span className="text-lg text-primary-strong font-bold leading-none">
 												{eventDate.getDate()}
 											</span>
 										</div>
 										<div className="flex-1 min-w-0">
-											<h5 className="text-white font-medium group-hover:text-purple-300 transition-colors truncate">
+											<h5 className="text-ink font-medium group-hover:text-primary transition-colors truncate">
 												{event.title}
 											</h5>
-											<p className="text-gray-400 text-sm">
+											<p className="text-ink-muted text-sm">
 												{event.time} &middot; {event.location}
 											</p>
 										</div>
 										<svg
-											className="w-5 h-5 text-gray-500 group-hover:text-purple-400 transition-colors flex-shrink-0"
+											className="w-5 h-5 text-ink-faint group-hover:text-primary transition-colors flex-shrink-0"
 											fill="none"
 											viewBox="0 0 24 24"
 											stroke="currentColor"
+											aria-hidden="true"
 										>
 											<path
 												strokeLinecap="round"
@@ -241,7 +264,7 @@ export default function MonthlyCalendar({
 						key="no-events"
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
-						className="text-center py-8 text-gray-400"
+						className="text-center py-8 text-ink-muted"
 					>
 						<p className="text-lg">No events scheduled this month</p>
 						<p className="text-sm mt-1">Check other months or stay tuned!</p>

@@ -18,7 +18,7 @@ The site should feel welcoming, accessible to all ages, and dead simple to use.
 
 ## Project Context
 
-**Stack:** Next.js 14 (App Router) + Clerk Auth + Convex (real-time DB) + Tailwind CSS + NextUI + Framer Motion
+**Stack:** Next.js 14 (App Router) + Clerk Auth + Convex (real-time DB) + Tailwind CSS (design tokens, hand-rolled UI primitives) + Framer Motion
 **Repo:** https://github.com/spragginsdesigns/bluffstuff
 **Deployed:** https://bluffstuff.vercel.app/
 **Year:** 2026
@@ -62,7 +62,7 @@ bluffstuff/
 │   ├── sign-in/            # Clerk sign-in page
 │   ├── sign-up/            # Clerk sign-up page
 │   ├── admin/seed/         # Admin seed page (committee role initialization)
-│   ├── layout.tsx          # Root layout (Convex + Clerk + NextUI + UserSync)
+│   ├── layout.tsx          # Root layout (Convex + Clerk + Theme + UserSync)
 │   └── page.tsx            # Home page (single-page with scroll sections)
 ├── convex/                 # Convex backend
 │   ├── schema.ts           # Database schema (users, events, rsvps, contactMessages)
@@ -144,8 +144,8 @@ Before writing ANY new code: search for existing implementations first. Red flag
 
 ### Styling
 
-- Dark-first design (primary bg: `bg-[#131111]`)
-- Subtle depth: blur, transparency, layered gradients
+- Themed design tokens ONLY — never hardcode colors; use `bg-bg`/`bg-surface`/`text-ink`/`text-ink-muted`/`bg-primary`/`bg-accent` etc. (defined in `app/globals.css`, mapped in `tailwind.config.ts`)
+- Light + dark themes via `.dark` class on `<html>`; toggle in `app/components/theme/`
 - Accessible color contrast
 - Consistent spacing and typography scale
 - Reusable card components
@@ -193,10 +193,14 @@ Never assume changes work. After ANY change:
 - **Admin bootstrap:** Visit `/admin/seed` to initialize admin with "committee" role (hardcoded to `atmosphere9999@gmail.com`)
 
 ### UI & Styling
-- UI framework: NextUI (`@nextui-org/react`) + Tailwind CSS + Framer Motion animations
-- Dark-first design: primary bg `bg-[#131111]`, glassmorphism cards, gradient accents
+- UI: Tailwind CSS + hand-rolled primitives in `app/components/ui/` (Button, Input, Textarea, Field, Modal, Section) + Framer Motion animations
+- **Theme system:** warm light mode (cream/terracotta/sage) is default; warm charcoal dark mode via `.dark` class. Tokens live in `app/globals.css` (CSS vars) → `tailwind.config.ts`. No-flash inline script in `layout.tsx`; `ThemeProvider`/`ThemeToggle` in `app/components/theme/`; Clerk follows theme via `app/lib/clerkAppearance.ts`
+- Fonts: Fraunces (display, `font-display`) + Atkinson Hyperlegible (body) via next/font — flyer keeps its own local Anton/Poppins
+- Modals: ALWAYS use `ui/Modal` (native `<dialog>` — focus containment, Escape, backdrop-click, single body-scroll-lock)
+- Navigation links: single source in `app/config/nav.ts` + `app/utils/scroll.ts` (NavBar, MobileTabBar, Footer all consume it)
+- Committee roster: single source in `app/data/committee.ts`
 - Mobile-first responsive: all components must work beautifully on phones
-- Modern aesthetic: inspired by shadcn/ui, Aceternity UI, Magic UI
+- Big readable type (17px base) + WCAG AA contrast — audience includes older adults
 - Single-page layout with smooth scroll-to-section navigation
 
 ### Routes & Middleware

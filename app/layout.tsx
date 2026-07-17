@@ -4,9 +4,27 @@ import Footer from "./components/Footer";
 import UserSync from "./components/UserSync";
 import MobileTabBar from "./components/MobileTabBar";
 import { Metadata, Viewport } from "next";
+import { Fraunces, Atkinson_Hyperlegible } from "next/font/google";
 import { Providers } from "./providers";
 import { ConvexClientProvider } from "./providers/ConvexClientProdiver";
 import { SITE_NAME, SITE_URL } from "./config/site";
+
+const fontDisplay = Fraunces({
+	subsets: ["latin"],
+	weight: ["600", "700"],
+	display: "swap",
+	variable: "--font-display"
+});
+
+const fontBody = Atkinson_Hyperlegible({
+	subsets: ["latin"],
+	weight: ["400", "700"],
+	display: "swap",
+	variable: "--font-body"
+});
+
+// Applies the saved (or system) theme before first paint to avoid a flash.
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("bs-theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}})()`;
 
 const SITE_DESCRIPTION =
 	"See what's happening at Woodward Bluffs Mobile Home Park — community events, potlucks, and get-togethers. RSVP in seconds, add events to your calendar, and share your ideas with the Activities Committee.";
@@ -42,7 +60,7 @@ export const metadata: Metadata = {
 	},
 	appleWebApp: {
 		title: SITE_NAME,
-		statusBarStyle: "black-translucent"
+		statusBarStyle: "default"
 	},
 	manifest: "/site.webmanifest",
 	metadataBase: new URL(SITE_URL),
@@ -71,8 +89,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-	colorScheme: "dark",
-	themeColor: "#131111"
+	themeColor: [
+		{ media: "(prefers-color-scheme: light)", color: "#FAF6EF" },
+		{ media: "(prefers-color-scheme: dark)", color: "#211C18" }
+	]
 };
 
 export default function RootLayout({
@@ -81,8 +101,13 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
-			<body className="flex flex-col min-h-screen bg-[#131111] text-white">
+		<html
+			lang="en"
+			suppressHydrationWarning
+			className={`${fontDisplay.variable} ${fontBody.variable}`}
+		>
+			<body className="flex flex-col min-h-screen bg-bg text-ink font-sans">
+				<script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
 				<Providers>
 					<ConvexClientProvider>
 						<UserSync />
