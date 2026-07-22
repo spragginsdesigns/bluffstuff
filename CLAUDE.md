@@ -204,7 +204,7 @@ Never assume changes work. After ANY change:
 - Single-page layout with smooth scroll-to-section navigation
 
 ### Routes & Middleware
-- Public routes: `/`, `/qr`, `/flyer/*`, `/api/flyer/*`, `/sign-in`, `/sign-up` (see `middleware.ts`)
+- Public routes: `/`, `/qr`, `/flyer/*`, `/api/flyer/*`, `/pay/*`, `/api/checkout`, `/sign-in`, `/sign-up` (see `middleware.ts`)
 - All other routes require Clerk authentication
 - Home page uses anchor sections: `#events`, `#calendar`, `#committee`, `#resources`, `#faq`, `#contact`
 
@@ -219,6 +219,17 @@ One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with Q
 - Flyer fonts (Anton, Poppins) are checked into `app/fonts/` and loaded via `fetch(new URL(..., import.meta.url))`.
 - Archiving an event hides it from the site but the flyer URL still renders — archive ≠ delete.
 - **Reads use Clerk↔Convex JWT auth.** `ConvexProviderWithClerk` (inside ClerkProvider — order matters) sends the Clerk JWT; committee-only queries check `ctx.auth.getUserIdentity()` — never a client-supplied email. Public queries must return sanitized fields only (`rsvps:getByEvent` → names, no PII). Requires: JWT template named "convex" in Clerk (created via Backend API), `CLERK_JWT_ISSUER_DOMAIN` set on both Convex deployments, `convex/auth.config.ts`.
+
+### Payments (Stripe) — full reference in `Docs/payments.md`
+Priced events (`events.priceCents`, dollars in the form → cents in the DB) get a "Pay Online" button → Stripe Checkout → `/pay/success` renders a door pass and emails a matching receipt. At-door cards go through Stripe Tap to Pay on a committee phone. Hard-won constraints:
+
+- **Wrong Stripe account = disaster.** BluffStuff uses the **contextpro.ai** account (`acct_1HHugpHGDQRligtc`), NOT the LineCrush account the local `stripe` CLI is authed to. Never run `stripe` CLI commands or use CLI keys here — use `STRIPE_SECRET_KEY` (the `bluffstuff-website` key) only.
+- **Amount is read server-side.** `/api/checkout` looks up `event.priceCents` from Convex — never trusts a client-supplied price.
+- **The success page IS the proof.** It re-fetches the session from Stripe with the secret key and only shows "You're paid!" for a verified-paid session (accepts `paid` AND `no_payment_required` for $0 promos). That's why the screen/email is trustworthy at the door.
+- **Recording + email are idempotent.** `payments:record` keys on the Stripe session id and returns `{ id, alreadyRecorded }`; the receipt email fires only when `alreadyRecorded` is false, so refreshes don't duplicate.
+- **Receipt email reuses the flyer Gmail transport** (`GMAIL_USER`/`GMAIL_APP_PASSWORD`) — no separate provider. Template `app/utils/receiptEmail.ts` is table-based + inline-styles only (Gmail/Yahoo strip modern CSS).
+- **`buttonClasses` must be imported from `app/components/ui/buttonStyles.ts`** (a plain module) in server components like `/pay/success` — importing it from the `"use client"` `Button.tsx` makes it a client reference and crashes the server render.
+- **Convex deploys are still manual** — `payments.ts` lives in `convex/`, so `npx convex dev --once` + `npx convex deploy` after edits.
 
 ## Key Files
 
@@ -240,6 +251,10 @@ One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with Q
 | Committee event writes (website) | `app/api/events/route.ts` |
 | Flyer email route | `app/api/sendFlyer/route.ts` |
 | Flyer art generation | `app/api/generateFlyerArt/route.ts` |
+| Stripe checkout session | `app/api/checkout/route.ts` |
+| Payment door pass + receipt | `app/pay/success/page.tsx` |
+| Receipt email template | `app/utils/receiptEmail.ts` |
+| Payments table/functions | `convex/payments.ts` |
 | Server-side Convex reads (no-store) | `app/utils/convexServer.ts` |
 | Type definitions | `types/Event.ts` |
 | Next.js config | `next.config.mjs` |
@@ -252,6 +267,7 @@ One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with Q
 | `users` | Clerk-synced user records with roles | `by_email` |
 | `events` | Community events (CRUD by committee) | `by_date`, `by_active` |
 | `rsvps` | Event attendance registrations | `by_event`, `by_email` |
+| `payments` | Online Stripe payments (door-pass records) | `by_event`, `by_session` |
 | `contactMessages` | Contact form submissions | — |
 
 ## Environment Variables

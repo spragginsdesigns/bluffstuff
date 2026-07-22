@@ -44,13 +44,17 @@ Monthly Meetings: First Tuesday of every month
 
 ## Technical Stack
 
-- Framework: Next.js 13+ (App Router)
+- Framework: Next.js 14 (App Router)
 - Language: TypeScript
-- Styling: Tailwind CSS
-- UI Components: Custom components with modern design
-- State Management: React Hooks
-- Image Hosting: Upload.io
-- Deployment: Vercel
+- Auth: Clerk (Google SSO)
+- Database + file storage: Convex (real-time)
+- Payments: Stripe (event payments + Tap to Pay at the door — see `Docs/payments.md`)
+- Styling: Tailwind CSS (design tokens, light/dark themes) + Framer Motion
+- UI Components: Hand-rolled primitives in `app/components/ui/`
+- Email: nodemailer (Gmail) — flyers, reminders, payment receipts
+- Deployment: Vercel (website) + Convex (backend functions, deployed separately)
+
+> This file is the original project brief. For current architecture see the root `README.md` and `CLAUDE.md`.
 
 ## Project Structure
 
@@ -64,10 +68,11 @@ Monthly Meetings: First Tuesday of every month
 
 ## Color Scheme
 
-- Primary Gradient: purple-400 to pink-600
-- Secondary Gradient: green-400 to blue-500
-- Background: Dark theme with gray-800 to gray-900 gradients
-- Text: White/Gray scale for dark theme
+Warm, community-friendly palette via themed design tokens (defined in `app/globals.css`, mapped in `tailwind.config.ts`). Never hardcode colors — use tokens (`bg-bg`, `bg-surface`, `text-ink`, `bg-primary`, `bg-accent`, …).
+
+- Light mode (default): cream / terracotta / sage
+- Dark mode (`.dark` on `<html>`): warm charcoal
+- Fonts: Fraunces (display) + Atkinson Hyperlegible (body) — big, readable type for all ages
 
 ## TODO Improvements
 

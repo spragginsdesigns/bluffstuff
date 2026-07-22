@@ -4,7 +4,7 @@ Community hub for **Woodward Bluffs Mobile Home Park** residents — events, RSV
 
 **Live:** https://bluffstuff.vercel.app
 
-**Stack:** Next.js 14 (App Router) · Clerk (Google SSO) · Convex (real-time DB + file storage) · Tailwind (design tokens, light/dark themes) · Framer Motion · nodemailer (Gmail) · OpenAI gpt-image-2 (flyer art)
+**Stack:** Next.js 14 (App Router) · Clerk (Google SSO) · Convex (real-time DB + file storage) · Stripe (event payments) · Tailwind (design tokens, light/dark themes) · Framer Motion · nodemailer (Gmail) · OpenAI gpt-image-2 (flyer art)
 
 ---
 
@@ -66,6 +66,19 @@ Agent tip: post the JSON from a UTF-8 file rather than inline shell strings — 
 
 ---
 
+## Payments
+
+Events can carry a price (`events.priceCents`); priced events get a **"Pay Online"** button that runs Stripe Checkout, and the resident receives a **door-pass confirmation** on screen and by email to show at the door. Committee members also take cards at the door via **Stripe Tap to Pay** on their phone. Both channels use the same Stripe account.
+
+Two things not to relearn:
+
+- **Stripe account:** the **contextpro.ai** account (`acct_1HHugpHGDQRligtc`), *not* the LineCrush account the local Stripe CLI is authenticated to. Never use CLI keys for BluffStuff — use `STRIPE_SECRET_KEY` (the `bluffstuff-website` key).
+- **The receipt email reuses the flyer Gmail transport** (`GMAIL_USER` / `GMAIL_APP_PASSWORD`) — no separate email provider.
+
+Full flow, security guardrails, the `payments` table, at-door setup, and how to test for free: **[`Docs/payments.md`](Docs/payments.md)**.
+
+---
+
 ## Environment variables
 
 Never hardcode any of these. Local values live in `.env.local`.
@@ -75,9 +88,10 @@ Never hardcode any of these. Local values live in `.env.local`.
 | Clerk keys | Local + Vercel | Auth (`@clerk/nextjs`) |
 | `CONVEX_DEPLOYMENT` | Local | Which Convex deployment the CLI targets (dev) |
 | `NEXT_PUBLIC_CONVEX_URL` | Local + Vercel | Convex client URL |
-| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Local + Vercel | Flyer + reminder emails |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Local + Vercel | Flyer + reminder + payment-receipt emails |
 | `FLYER_RECIPIENT_EMAIL` | Local + Vercel | Who receives new-event flyers (the committee member who prints) |
 | `OPENAI_API_KEY` | Local + Vercel | Flyer background art (gpt-image-2) |
+| `STRIPE_SECRET_KEY` | Local + Vercel | Event payments (Next.js only; the contextpro.ai account, not LineCrush) |
 | `COMMITTEE_API_SECRET` | Local + Vercel + **both Convex deployments** | Gates committee write mutations |
 | `CLERK_JWT_ISSUER_DOMAIN` | **Both Convex deployments only** | Clerk instance domain for JWT auth (`convex/auth.config.ts`) |
 
