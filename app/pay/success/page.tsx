@@ -4,6 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { convexQuery } from "@/app/utils/convexServer";
+import { sendPaymentReceiptEmail } from "@/app/utils/receiptEmail";
 import { buttonClasses } from "@/app/components/ui/buttonStyles";
 
 export const dynamic = "force-dynamic";
@@ -88,14 +89,15 @@ export default async function PaymentSuccessPage({
 			console.error("Error loading event for confirmation:", error);
 		}
 
-		// Record the payment so the committee can see who paid; never
-		// block the resident's confirmation screen on it.
+		// Record the payment so the committee can see who paid, and email
+		// the door pass exactly once (refreshes hit alreadyRecorded).
+		// Neither may block the resident's confirmation screen.
 		const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 		const secret = process.env.COMMITTEE_API_SECRET;
 		if (convexUrl && secret) {
 			try {
 				const convex = new ConvexHttpClient(convexUrl);
-				await convex.mutation(api.payments.record, {
+				const recorded = await convex.mutation(api.payments.record, {
 					eventId,
 					stripeSessionId: sessionId,
 					payerName,
@@ -104,8 +106,29 @@ export default async function PaymentSuccessPage({
 					confirmationCode,
 					secret
 				});
+
+				if (!recorded.alreadyRecorded && payerEmail) {
+					await sendPaymentReceiptEmail({
+						to: payerEmail,
+						payerName,
+						eventTitle: event?.title ?? "Community event",
+						dateLabel: event
+							? new Date(`${event.date}T00:00:00`).toLocaleDateString(
+									"en-US",
+									{ weekday: "long", month: "long", day: "numeric" }
+								)
+							: "See the event page",
+						time: event?.time ?? "",
+						location: event?.location ?? "Woodward Bluffs",
+						amountLabel: (amountCents / 100).toLocaleString("en-US", {
+							style: "currency",
+							currency: "usd"
+						}),
+						confirmationCode
+					});
+				}
 			} catch (error) {
-				console.error("Error recording payment in Convex:", error);
+				console.error("Error recording/emailing payment:", error);
 			}
 		}
 	}
@@ -193,8 +216,8 @@ export default async function PaymentSuccessPage({
 
 					{payerEmail && (
 						<p className="text-sm text-ink-muted text-center">
-							A receipt was emailed to {payerEmail} — that works at the
-							door too.
+							Your door pass was also emailed to {payerEmail} —
+							showing that email works too.
 						</p>
 					)}
 

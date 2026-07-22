@@ -28,14 +28,15 @@ export const record = mutation({
 			)
 			.first();
 		if (existing) {
-			return existing._id;
+			return { id: existing._id, alreadyRecorded: true };
 		}
 
 		const { secret, ...fields } = args;
-		return await ctx.db.insert("payments", {
+		const id = await ctx.db.insert("payments", {
 			...fields,
 			createdAt: Date.now()
 		});
+		return { id, alreadyRecorded: false };
 	}
 });
 
