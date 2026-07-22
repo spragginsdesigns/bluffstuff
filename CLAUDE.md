@@ -264,4 +264,5 @@ Required (never hardcode these):
 - `FLYER_RECIPIENT_EMAIL` — where new-event flyer PNGs are auto-emailed (the committee member who prints them)
 - `OPENAI_API_KEY` — flyer background art generation (gpt-image-2)
 - `COMMITTEE_API_SECRET` — gates committee write mutations; must match on Vercel AND both Convex deployments (`npx convex env set COMMITTEE_API_SECRET <v> [--prod]`)
+- `STRIPE_SECRET_KEY` — online event payments (Next.js only; Convex never talks to Stripe). Uses the contextpro.ai Stripe account — NOT the LineCrush account the local Stripe CLI is authed to
 - `CLERK_JWT_ISSUER_DOMAIN` — Convex deployments only; the Clerk instance domain for JWT auth

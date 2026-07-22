@@ -4,7 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { convexQuery } from "@/app/utils/convexServer";
-import { buttonClasses } from "@/app/components/ui/Button";
+import { buttonClasses } from "@/app/components/ui/buttonStyles";
 
 export const dynamic = "force-dynamic";
 
