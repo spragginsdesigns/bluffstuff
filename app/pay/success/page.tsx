@@ -55,7 +55,11 @@ export default async function PaymentSuccessPage({
 		);
 	}
 
-	if (session.payment_status !== "paid") {
+	// "no_payment_required" = a 100%-off promo brought the total to $0
+	const isPaid =
+		session.payment_status === "paid" ||
+		session.payment_status === "no_payment_required";
+	if (!isPaid) {
 		return (
 			<ErrorCard message="This payment hasn't gone through yet. Please try again from the event page." />
 		);
