@@ -10,6 +10,7 @@
 
 import type * as contactMessages from "../contactMessages.js";
 import type * as events from "../events.js";
+import type * as payments from "../payments.js";
 import type * as rsvps from "../rsvps.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
@@ -23,6 +24,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   contactMessages: typeof contactMessages;
   events: typeof events;
+  payments: typeof payments;
   rsvps: typeof rsvps;
   seed: typeof seed;
   users: typeof users;

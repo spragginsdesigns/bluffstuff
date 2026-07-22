@@ -10,6 +10,7 @@ export interface ConvexEvent {
 	time: string;
 	location: string;
 	imageUrl?: string;
+	priceCents?: number;
 	createdBy: string;
 	isActive: boolean;
 	createdAt: number;

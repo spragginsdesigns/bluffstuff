@@ -18,6 +18,7 @@ export default defineSchema({
 		time: v.string(), // e.g. "6:00 PM"
 		location: v.string(),
 		imageUrl: v.optional(v.string()),
+		priceCents: v.optional(v.number()), // 0 or absent = free event
 		createdBy: v.string(), // email of creator
 		isActive: v.boolean(),
 		createdAt: v.number(),
@@ -36,6 +37,18 @@ export default defineSchema({
 	})
 		.index("by_event", ["eventId"])
 		.index("by_email", ["email"]),
+
+	payments: defineTable({
+		eventId: v.id("events"),
+		stripeSessionId: v.string(),
+		payerName: v.string(),
+		payerEmail: v.string(),
+		amountCents: v.number(),
+		confirmationCode: v.string(),
+		createdAt: v.number()
+	})
+		.index("by_event", ["eventId"])
+		.index("by_session", ["stripeSessionId"]),
 
 	contactMessages: defineTable({
 		name: v.string(),

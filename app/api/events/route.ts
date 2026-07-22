@@ -10,6 +10,14 @@ import { convexQuery } from "@/app/utils/convexServer";
  * so this Clerk-authenticated route verifies the caller's committee role
  * and injects the secret into the Convex mutations server-side.
  */
+
+// Whole non-negative cents only; undefined leaves the stored value alone
+function sanitizePriceCents(value: unknown): number | undefined {
+	if (typeof value !== "number" || Number.isNaN(value) || value < 0) {
+		return undefined;
+	}
+	return Math.round(value);
+}
 export async function POST(request: NextRequest) {
 	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 	const secret = process.env.COMMITTEE_API_SECRET;
@@ -67,6 +75,7 @@ export async function POST(request: NextRequest) {
 				date,
 				time,
 				location,
+				priceCents: sanitizePriceCents(body.priceCents),
 				createdBy: email,
 				secret
 			});
@@ -88,6 +97,7 @@ export async function POST(request: NextRequest) {
 				date,
 				time,
 				location,
+				priceCents: sanitizePriceCents(body.priceCents),
 				updaterEmail: email,
 				secret
 			});

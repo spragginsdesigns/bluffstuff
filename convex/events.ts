@@ -6,7 +6,7 @@ import { v } from "convex/values";
 // never hold it — the website's writes go through Clerk-authenticated
 // Next.js API routes, and trusted agents call Convex with it directly.
 // The email args remain for attribution but are not the auth boundary.
-function requireCommitteeSecret(secret: string): void {
+export function requireCommitteeSecret(secret: string): void {
 	const expected = process.env.COMMITTEE_API_SECRET;
 	if (!expected || secret !== expected) {
 		throw new Error("Invalid committee secret");
@@ -55,6 +55,7 @@ export const create = mutation({
 		time: v.string(),
 		location: v.string(),
 		imageUrl: v.optional(v.string()),
+		priceCents: v.optional(v.number()),
 		createdBy: v.string(),
 		secret: v.string()
 	},
@@ -90,6 +91,7 @@ export const update = mutation({
 		time: v.optional(v.string()),
 		location: v.optional(v.string()),
 		imageUrl: v.optional(v.string()),
+		priceCents: v.optional(v.number()),
 		updaterEmail: v.string(),
 		secret: v.string()
 	},

@@ -25,6 +25,9 @@ export default function EventFormModal({
 	const [date, setDate] = useState(editEvent?.date ?? "");
 	const [time, setTime] = useState(editEvent?.time ?? "");
 	const [location, setLocation] = useState(editEvent?.location ?? "");
+	const [price, setPrice] = useState(
+		editEvent?.priceCents ? (editEvent.priceCents / 100).toString() : ""
+	);
 	const [status, setStatus] = useState<
 		"idle" | "submitting" | "success" | "error"
 	>("idle");
@@ -38,6 +41,13 @@ export default function EventFormModal({
 		setStatus("submitting");
 		setErrorMessage("");
 
+		// Dollars in the form, cents in the database; 0 clears the price
+		const parsedPrice = parseFloat(price);
+		const priceCents =
+			price.trim() && !Number.isNaN(parsedPrice) && parsedPrice > 0
+				? Math.round(parsedPrice * 100)
+				: 0;
+
 		try {
 			if (editEvent) {
 				const res = await fetch("/api/events", {
@@ -50,7 +60,8 @@ export default function EventFormModal({
 						description,
 						date,
 						time,
-						location
+						location,
+						priceCents
 					})
 				});
 				if (!res.ok) {
@@ -69,7 +80,8 @@ export default function EventFormModal({
 						description,
 						date,
 						time,
-						location
+						location,
+						priceCents
 					})
 				});
 				if (!res.ok) {
@@ -159,6 +171,22 @@ export default function EventFormModal({
 						value={location}
 						onChange={(e) => setLocation(e.target.value)}
 						placeholder="e.g. Community Clubhouse"
+					/>
+				</Field>
+
+				<Field
+					label="Price per person ($ — leave blank for free events)"
+					htmlFor="event-price"
+				>
+					<Input
+						id="event-price"
+						type="number"
+						min="0"
+						step="0.01"
+						inputMode="decimal"
+						value={price}
+						onChange={(e) => setPrice(e.target.value)}
+						placeholder="e.g. 10"
 					/>
 				</Field>
 
