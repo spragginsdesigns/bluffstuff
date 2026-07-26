@@ -122,6 +122,7 @@ Never hardcode any of these. Local values live in `.env.local`.
 | `CONVEX_DEPLOYMENT` | Local | Which Convex deployment the CLI targets (dev) |
 | `NEXT_PUBLIC_CONVEX_URL` | Local + Vercel | Convex client URL |
 | `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Local + Vercel | Flyer + reminder + payment-receipt emails |
+| `MAIL_FROM_ADDRESS` | Optional, Vercel | Visible sender if it should differ from `GMAIL_USER`. **Requires a verified Gmail alias first** — see below |
 | `FLYER_RECIPIENT_EMAIL` | Local + Vercel | Who receives new-event flyers (the committee member who prints) |
 | `OPENAI_API_KEY` | Local + Vercel | Flyer background art (gpt-image-2) |
 | `STRIPE_SECRET_KEY` | Local + Vercel | Event payments (Next.js only; the contextpro.ai account, not LineCrush) |
@@ -130,6 +131,18 @@ Never hardcode any of these. Local values live in `.env.local`.
 | `CLERK_JWT_ISSUER_DOMAIN` | **Both Convex deployments only** | Clerk instance domain for JWT auth (`convex/auth.config.ts`) |
 
 Convex has **two deployments**: dev (`fantastic-buzzard-256`) and prod (`festive-mink-675`). Test data never touches prod.
+
+### Who the site emails as
+
+Every outgoing email — flyers, reminders, payment receipts — is sent through the single Gmail account in `GMAIL_USER`, using an app password. All three go out as **"Woodward Bluffs Activities"** via `mailFrom()` in `app/config/site.ts`; never set a `from:` by hand.
+
+**Gmail rewrites the `From:` header** back to the authenticated account unless the address is a verified *Send mail as* identity on that account. So `MAIL_FROM_ADDRESS` alone changes nothing — the alias has to exist first. To move the site off a personal address:
+
+1. Gmail → Settings → **Accounts and Import** → *Send mail as* → **Add another email address**
+2. Enter the committee address and the display name, complete the emailed verification
+3. Set `MAIL_FROM_ADDRESS` to it on Vercel (`vercel env add MAIL_FROM_ADDRESS production`) and redeploy
+
+Until then the site sends as `GMAIL_USER`, which is the intended fallback. Practical limits worth knowing: Gmail caps sending at roughly **500 recipients/day**, everything depends on that one account's password, and replies land wherever the sender address points.
 
 ## Development
 

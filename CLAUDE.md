@@ -289,6 +289,12 @@ Three anonymous, login-free signals that exist to answer "why did nobody come?".
 - **Moderation deletes are JWT-gated too** (`contactMessages:remove/setRead`, `ideas:remove`, `feedback:remove`) — same `requireCommittee` helper. `ideas:remove` also deletes that idea's votes so no orphans are left behind. Destructive buttons use `ui/ConfirmButton` (tap to arm, tap to confirm, auto-disarms) — never `window.confirm`, which blocks the page and can't be themed.
 - **The Messages badge counts unread, not total.** `contactMessages.isRead` is optional so existing rows stay valid; absent means unread.
 
+### Outgoing Email (sender identity)
+- **One Gmail account sends everything** (`GMAIL_USER` + app password): flyers, reminders, receipts.
+- **Always build the From header with `mailFrom()`** from `app/config/site.ts` — never inline a `from:` string. It applies the "Woodward Bluffs Activities" display name so residents don't see a bare personal address.
+- **`MAIL_FROM_ADDRESS` is optional and does nothing on its own.** Gmail rewrites `From:` back to the authenticated account unless the address is a verified *Send mail as* alias on that Gmail account. Add the alias first, then set the variable. Setup steps are in the README.
+- Gmail's practical ceiling is ~500 recipients/day. Fine at current RSVP volume; the reminder cron is the path that would hit it first if the park's list grows.
+
 ### Event Reminders (cron)
 `/api/sendReminders` emails everyone who RSVP'd the day before an event. It replaced a stub that took `{email, message}` and was called by nothing — which is why residents were never reminded.
 
