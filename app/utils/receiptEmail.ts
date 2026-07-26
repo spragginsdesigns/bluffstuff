@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { mailFrom } from "@/app/config/site";
 
 interface ReceiptEmailArgs {
 	to: string;
@@ -125,7 +126,7 @@ export async function sendPaymentReceiptEmail(
 	});
 
 	const info = await transporter.sendMail({
-		from: `"Woodward Bluffs Activities" <${gmailUser}>`,
+		from: mailFrom(gmailUser),
 		to,
 		subject: `You're paid! ${eventTitle} — code ${confirmationCode}`,
 		text,

@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 import { Doc } from "@/convex/_generated/dataModel";
 import { formatFlyerDate } from "@/app/utils/flyer";
 import { convexQuery } from "@/app/utils/convexServer";
-import { SITE_URL } from "@/app/config/site";
+import { SITE_URL, mailFrom } from "@/app/config/site";
 
 export async function POST(request: NextRequest) {
 	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 		});
 
 		const info = await transporter.sendMail({
-			from: gmailUser,
+			from: mailFrom(gmailUser),
 			to: recipient,
 			subject: `Flyer ready to print: ${event.title}`,
 			text: [

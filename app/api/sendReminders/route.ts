@@ -4,7 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { convexQuery } from "@/app/utils/convexServer";
-import { SITE_URL } from "@/app/config/site";
+import { SITE_URL, mailFrom } from "@/app/config/site";
 
 /**
  * Day-before event reminders, run by Vercel Cron (see vercel.json).
@@ -118,7 +118,10 @@ async function handler(request: NextRequest) {
 			for (const recipient of event.recipients) {
 				try {
 					await transporter.sendMail({
-						from: gmailUser,
+						// Residents see "Woodward Bluffs Activities", not a bare
+						// personal Gmail address they won't recognise
+						from: mailFrom(gmailUser),
+						replyTo: gmailUser,
 						to: recipient.email,
 						subject: `Tomorrow: ${event.title}`,
 						text: [
