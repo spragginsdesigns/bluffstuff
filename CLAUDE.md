@@ -289,6 +289,16 @@ Three anonymous, login-free signals that exist to answer "why did nobody come?".
 - **Moderation deletes are JWT-gated too** (`contactMessages:remove/setRead`, `ideas:remove`, `feedback:remove`) — same `requireCommittee` helper. `ideas:remove` also deletes that idea's votes so no orphans are left behind. Destructive buttons use `ui/ConfirmButton` (tap to arm, tap to confirm, auto-disarms) — never `window.confirm`, which blocks the page and can't be themed.
 - **The Messages badge counts unread, not total.** `contactMessages.isRead` is optional so existing rows stay valid; absent means unread.
 
+### Event Reminders (cron)
+`/api/sendReminders` emails everyone who RSVP'd the day before an event. It replaced a stub that took `{email, message}` and was called by nothing — which is why residents were never reminded.
+
+- **Scheduled by Vercel Cron** (`vercel.json`, `0 16 * * *` = 9am Pacific). No VPS or external scheduler; it runs next to the Gmail transport it needs.
+- **`CRON_SECRET` bearer token is the authentication.** The route is public in `middleware.ts` because a cron has no Clerk session, so that header check is the only gate — don't remove it.
+- **Idempotent via `events.reminderSentAt`.** `reminders:dueForReminder` only returns events where it's unset, and the route marks each event *after* its sends. A crash mid-event retries that event; a retry never double-emails.
+- **`reminders:dueForReminder` returns attendee email addresses** — the one query that deliberately hands back PII. It is secret-gated (not JWT), and must never be called from the browser.
+- **"Tomorrow" is resolved in `America/Los_Angeles`**, not UTC. Cron fires in UTC, and near midnight a naive UTC date sends reminders a day early or late.
+- One bad address doesn't abort the run; failures are counted per event and logged.
+
 ### Admin Dashboard (`/admin`)
 - Lives at its own route, **not** on the home page. Linked from the navbar only when `useIsCommittee()` is true.
 - The page's role check is UX, not the security boundary: every committee query is gated in Convex and every event write goes through the secret-gated `/api/events`. A resident who forced their way in sees empty tabs and failed writes.

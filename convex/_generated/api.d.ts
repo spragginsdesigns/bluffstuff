@@ -21,6 +21,7 @@ import type * as feedbackOptions from "../feedbackOptions.js";
 import type * as ideas from "../ideas.js";
 import type * as interest from "../interest.js";
 import type * as payments from "../payments.js";
+import type * as reminders from "../reminders.js";
 import type * as rsvps from "../rsvps.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   ideas: typeof ideas;
   interest: typeof interest;
   payments: typeof payments;
+  reminders: typeof reminders;
   rsvps: typeof rsvps;
   seed: typeof seed;
   users: typeof users;

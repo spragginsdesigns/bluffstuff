@@ -25,6 +25,10 @@ export default defineSchema({
 		// yet, which is meaningfully different from a recorded 0.
 		attendanceCount: v.optional(v.number()),
 		attendanceNote: v.optional(v.string()), // weather, conflicts, anything odd
+		// Set once the day-before reminder has gone out. Absent = not sent.
+		// This is the idempotency key for the cron: a retry must never
+		// double-email residents.
+		reminderSentAt: v.optional(v.number()),
 		createdAt: v.number(),
 		updatedAt: v.number()
 	})

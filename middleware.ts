@@ -7,6 +7,9 @@ const isPublicRoute = createRouteMatcher([
 	"/api/flyer(.*)",
 	// Post-event feedback is intentionally login-free — see app/feedback
 	"/feedback(.*)",
+	// Vercel Cron has no Clerk session; the route authenticates the caller
+	// itself with a CRON_SECRET bearer token.
+	"/api/sendReminders",
 	"/pay(.*)",
 	"/api/checkout",
 	"/sign-in(.*)",

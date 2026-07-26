@@ -43,6 +43,7 @@ committee enters event (website form or trusted agent)
 | `/api/flyer/[eventId]` | Public | Renders the flyer PNG (edge runtime, `next/og` + satori; Anton/Poppins fonts from `app/fonts/`) |
 | `/api/events` | Clerk + committee role | Website create / update / archive / record attendance — injects the write secret server-side |
 | `/api/sendFlyer` | Clerk + committee role | Emails the flyer PNG to `FLYER_RECIPIENT_EMAIL` via Gmail |
+| `/api/sendReminders` | `CRON_SECRET` bearer | Vercel Cron, daily 9am Pacific — emails everyone who RSVP'd to tomorrow's events. Idempotent via `events.reminderSentAt` |
 | `/api/generateFlyerArt` | Clerk + committee role | gpt-image-2 → Convex storage → `event.imageUrl` |
 | `/feedback/[eventId]` | **Public, no sign-in** | Post-event feedback — see [The Feedback Loop](#the-feedback-loop) |
 | `/admin` | Clerk + committee role | Committee dashboard (events, turnout, ideas, messages) |
@@ -125,6 +126,7 @@ Never hardcode any of these. Local values live in `.env.local`.
 | `OPENAI_API_KEY` | Local + Vercel | Flyer background art (gpt-image-2) |
 | `STRIPE_SECRET_KEY` | Local + Vercel | Event payments (Next.js only; the contextpro.ai account, not LineCrush) |
 | `COMMITTEE_API_SECRET` | Local + Vercel + **both Convex deployments** | Gates committee write mutations |
+| `CRON_SECRET` | Local + Vercel (Production) | Bearer token Vercel Cron sends to `/api/sendReminders`; it is that route's only auth |
 | `CLERK_JWT_ISSUER_DOMAIN` | **Both Convex deployments only** | Clerk instance domain for JWT auth (`convex/auth.config.ts`) |
 
 Convex has **two deployments**: dev (`fantastic-buzzard-256`) and prod (`festive-mink-675`). Test data never touches prod.
