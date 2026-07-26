@@ -94,6 +94,49 @@ pnpm build
 pnpm start
 ```
 
+**Two local gotchas that cost real time — read before running any of the above:**
+
+- **Never run a build while the dev server is running.** `next dev` and `next build` share `.next/`, and the build clobbers the dev server's chunks. The symptom is confusing: the dev server keeps returning 200 for pages but 404s its own `main-app.js` / `app-pages-internals.js`, so every page hangs on a loading spinner with a clean console. Fix: stop dev, `rm -rf .next`, restart. Stop the dev server *first* if you need to build.
+- **`pnpm --ignore-workspace <script>` wants to purge `node_modules`.** The flag changes pnpm's config hash, so it tries a reinstall and aborts with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`. Don't force it. Invoke the tool directly instead — `npx next dev`, `npx next build`, `npx tsc --noEmit` — which is exactly what the package scripts run.
+
+---
+
+## Shipping (end to end)
+
+`main` is the only branch. **There is no `Production` branch here** — the global `git push origin main:Production` rule is LineCrush-specific, do not apply it to this repo. Vercel auto-deploys from `main`.
+
+**Order matters: Convex before Git.** Vercel builds only Next.js, so pushing first leaves the live frontend calling functions that don't exist yet.
+
+```bash
+# 1. Verify. Dev server must be STOPPED for the build (see gotcha above).
+npx tsc --noEmit
+npx next build
+
+# 2. Convex to prod FIRST — required whenever anything in convex/ changed
+npx convex deploy -y          # -> festive-mink-675 (prod)
+
+# 3. Then commit + push. Stage only files you touched; never `git add -A`.
+git add <specific files>
+git commit -m "type(scope): ..."
+git push origin main          # Vercel picks it up
+```
+
+**Verify prod afterwards — deploying is not the same as working.** Convex has no admin UI check from the CLI, so query the deployment directly:
+
+```bash
+# any public query; `status: success` means the function is live
+curl -s https://festive-mink-675.convex.cloud/api/query \
+  -H 'Content-Type: application/json' \
+  -d '{"path":"ideas:list","args":{},"format":"json"}'
+```
+
+Then open the live site in a **browser**, not curl. Most sections are client components whose Convex queries are unresolved during SSR, so they render `null` and are genuinely absent from the fetched HTML even when they work perfectly. Grepping the HTML for them produces false alarms.
+
+**Gates that are easy to miss:**
+- Anything in `convex/` changed → `npx convex deploy` is mandatory, and a new env var must be set on **both** deployments (`npx convex env set NAME value` and again with `--prod`) plus Vercel.
+- Schema changes are validated against live prod data on deploy. Adding a **required** field to an existing table will fail the push — add it as `v.optional()` (see `events.attendanceCount`, `contactMessages.isRead`).
+- Committee-gated behaviour can't be verified while signed out; both the queries and the `/admin` page will look empty and that is correct. Don't chase it.
+
 ---
 
 ## Coding Standards

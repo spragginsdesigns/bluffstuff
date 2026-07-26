@@ -108,5 +108,8 @@ pnpm build
 
 ## Deploying
 
-- **Website:** push to `main` → Vercel auto-deploys.
+- **Website:** push to `main` → Vercel auto-deploys. `main` is the only branch; there is no `Production` branch.
 - **Convex functions:** NOT deployed by Vercel — run `npx convex deploy` to push `convex/` to prod whenever those files change.
+- **Deploy Convex before pushing.** Vercel builds only Next.js, so pushing first leaves the live site calling functions that don't exist yet.
+
+The full runbook — verification steps, how to confirm prod actually works, and the local build/dev gotchas that waste an afternoon — is in `CLAUDE.md` under **Shipping (end to end)**.
