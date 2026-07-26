@@ -12,7 +12,9 @@ export const SITE_URL_DISPLAY = "bluffstuff.vercel.app";
  * residents would see a bare personal address in their inbox — which reads as
  * a stranger, not the committee. Always send via `mailFrom()`.
  */
-export const MAIL_FROM_NAME = "Woodward Bluffs Activities";
+// "Committee" is load-bearing: this is a residents' committee, not the park.
+// Dropping it makes the sender read as park management, which it is not.
+export const MAIL_FROM_NAME = "Woodward Bluffs Activities Committee";
 
 /**
  * Builds the From header. Server-side only.

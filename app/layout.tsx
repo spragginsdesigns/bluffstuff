@@ -42,7 +42,9 @@ export const metadata: Metadata = {
 	],
 	authors: [{ name: "Woodward Bluffs Activities Committee" }],
 	creator: "Woodward Bluffs Activities Committee",
-	publisher: "Woodward Bluffs Mobile Home Park",
+	// The committee publishes this site, not the park. It is a residents'
+	// committee with no authority over park management — don't imply otherwise.
+	publisher: "Woodward Bluffs Activities Committee",
 	formatDetection: {
 		email: false,
 		address: false,
