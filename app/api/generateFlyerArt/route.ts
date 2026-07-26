@@ -116,7 +116,9 @@ export async function POST(request: NextRequest) {
 		if (!b64) {
 			throw new Error("OpenAI response contained no image data");
 		}
-		const imageBytes = Buffer.from(b64, "base64");
+		// Uint8Array, not Buffer: current @types/node Buffer no longer satisfies
+		// fetch's BodyInit, which fails the production type check. Same bytes.
+		const imageBytes = new Uint8Array(Buffer.from(b64, "base64"));
 
 		// Upload into Convex file storage, then save the URL on the event
 		const uploadUrl = await convex.mutation(api.events.generateUploadUrl, {
