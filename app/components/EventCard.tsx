@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { ConvexEvent } from "@/types/Event";
 import RsvpModal from "./RsvpModal";
 import AttendeesList from "./AttendeesList";
+import InterestButton from "./InterestButton";
 import { motion } from "framer-motion";
 import Button from "./ui/Button";
 import {
@@ -188,6 +189,7 @@ export default function EventCard({ event }: EventCardProps) {
 									: `Pay Online — ${price}`}
 							</Button>
 						)}
+						<InterestButton eventId={event._id} />
 					</div>
 
 					{/* Calendar Buttons */}

@@ -7,12 +7,14 @@ import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "../config/nav";
 import { scrollToSection } from "../utils/scroll";
+import { useIsCommittee } from "../hooks/useIsCommittee";
 import { buttonClasses } from "./ui/Button";
 import ThemeToggle from "./theme/ThemeToggle";
 
 export default function NavBar() {
 	const [isOpen, setIsOpen] = useState(false);
 	const pathname = usePathname();
+	const { isCommittee } = useIsCommittee();
 
 	const scrollTo = (id: string) => {
 		setIsOpen(false);
@@ -21,6 +23,11 @@ export default function NavBar() {
 
 	const linkClasses =
 		"text-ink-muted hover:text-ink px-3 py-2 rounded-lg text-base font-medium hover:bg-surface-2 transition-colors";
+
+	// Visually distinct from the public section links — it goes somewhere else
+	// entirely, and only the committee ever sees it.
+	const dashboardClasses =
+		"px-3 py-2 rounded-lg text-base font-medium bg-primary-soft text-primary-strong hover:bg-primary-soft/70 transition-colors";
 
 	return (
 		<nav className="bg-surface/80 backdrop-blur-md border-b border-border">
@@ -56,6 +63,11 @@ export default function NavBar() {
 									{label}
 								</button>
 							))}
+							{isCommittee && (
+								<Link href="/admin" className={dashboardClasses}>
+									Dashboard
+								</Link>
+							)}
 							<ThemeToggle />
 							<SignedOut>
 								<SignInButton mode="modal">
@@ -148,6 +160,15 @@ export default function NavBar() {
 								{label}
 							</button>
 						))}
+						{isCommittee && (
+							<Link
+								href="/admin"
+								onClick={() => setIsOpen(false)}
+								className={`${dashboardClasses} block`}
+							>
+								Dashboard
+							</Link>
+						)}
 						<SignedOut>
 							<div className="pt-2">
 								<SignInButton mode="modal">

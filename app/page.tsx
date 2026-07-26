@@ -6,33 +6,28 @@ import { api } from "@/convex/_generated/api";
 import EventCard from "./components/EventCard";
 import Hero from "./components/Hero";
 import MonthlyCalendar from "./components/MonthlyCalendar";
-import CommitteeDashboard from "./components/CommitteeDashboard";
 import FAQ from "./components/FAQ";
 import ContactForm from "./components/ContactForm";
+import IdeaBoard from "./components/IdeaBoard";
+import RecentEventsFeedback from "./components/RecentEventsFeedback";
 import Button from "./components/ui/Button";
 import { ConvexEvent } from "../types/Event";
 import { motion } from "framer-motion";
-import { useIsCommittee } from "./hooks/useIsCommittee";
 import { COMMITTEE_MEMBERS } from "./data/committee";
 import { scrollToSection } from "./utils/scroll";
 
 const EVENTS_PREVIEW_COUNT = 6;
 
 export default function Home() {
-	const { isCommittee, isLoaded } = useIsCommittee();
 	const localDate = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in user's timezone
 	const upcomingEventsRaw = useQuery(api.events.listUpcoming, { localDate });
 	// Treat undefined (still loading / connection issue) as empty so the page doesn't spin forever
 	const upcomingEvents = upcomingEventsRaw ?? [];
 	const [showAllEvents, setShowAllEvents] = useState(false);
 
-	if (!isLoaded) {
-		return (
-			<div className="min-h-screen flex items-center justify-center">
-				<div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-			</div>
-		);
-	}
+	// The home page no longer waits on Clerk. It used to block rendering until
+	// auth loaded so the committee dashboard wouldn't flash in; the dashboard
+	// now lives at /admin, so a visitor gets content without that round trip.
 
 	const hasMoreEvents = upcomingEvents.length > EVENTS_PREVIEW_COUNT;
 	const visibleEvents = showAllEvents
@@ -50,9 +45,6 @@ export default function Home() {
 				animate={{ opacity: 1 }}
 				transition={{ duration: 0.5 }}
 			>
-				{/* Committee Dashboard - only visible to committee members */}
-				{isCommittee && <CommitteeDashboard />}
-
 				{/* Events Section */}
 				<section
 					id="events"
@@ -150,6 +142,12 @@ export default function Home() {
 						/>
 					</div>
 				</section>
+
+				{/* Post-event feedback for anything that just happened */}
+				<RecentEventsFeedback />
+
+				{/* Resident idea board */}
+				<IdeaBoard />
 
 				{/* About the Committee */}
 				<section id="committee" className="py-12 md:py-16 scroll-mt-20">

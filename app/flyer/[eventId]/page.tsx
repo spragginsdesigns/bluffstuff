@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -74,6 +75,11 @@ export default function EventFlyerPage() {
 		);
 	}
 
+	// Once the event has passed, the flyer QR that residents already scanned
+	// becomes the way in to feedback — no second QR needed on the printed page.
+	const isPast =
+		new Date(event.date + "T00:00:00") < new Date(new Date().toDateString());
+
 	const flyerUrl = `/api/flyer/${eventId}`;
 	const flyerFilename = `flyer-${event.title
 		.toLowerCase()
@@ -84,6 +90,24 @@ export default function EventFlyerPage() {
 		<div className="min-h-screen flex flex-col items-center py-10 print:py-0">
 			{/* Screen-only helper bar */}
 			<div className="print:hidden mb-8 text-center px-4">
+				{isPast && (
+					<div className="max-w-md mx-auto mb-8 rounded-2xl bg-primary-soft border border-primary/20 p-6">
+						<h2 className="font-display text-xl font-bold text-ink mb-2">
+							This one has already happened
+						</h2>
+						<p className="text-ink-muted text-base mb-5">
+							Were you there? Couldn&apos;t make it? Either way we&apos;d love
+							to know — it takes about a minute.
+						</p>
+						<Link
+							href={`/feedback/${eventId}`}
+							className={buttonClasses("primary", "lg")}
+						>
+							Tell Us What You Think
+						</Link>
+					</div>
+				)}
+
 				<h1 className="font-display text-2xl md:text-3xl font-bold text-ink mb-2">
 					{event.title} — Flyer
 				</h1>

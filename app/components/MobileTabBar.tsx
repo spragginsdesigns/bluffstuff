@@ -53,6 +53,22 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
 			/>
 		</svg>
 	),
+	ideas: (
+		<svg
+			className="w-6 h-6"
+			fill="none"
+			viewBox="0 0 24 24"
+			stroke="currentColor"
+			aria-hidden="true"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={1.8}
+				d="M9 21h6M10 18h4a1 1 0 00.9-.55l.6-1.2a6 6 0 10-7 0l.6 1.2A1 1 0 0010 18z"
+			/>
+		</svg>
+	),
 	contact: (
 		<svg
 			className="w-6 h-6"
@@ -82,12 +98,19 @@ export default function MobileTabBar() {
 			aria-label="Quick navigation"
 			className="md:hidden print:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/90 backdrop-blur-lg border-t border-border pb-[env(safe-area-inset-bottom)]"
 		>
-			<div className="grid grid-cols-4">
+			{/* Column count follows the config — Tailwind can't build a dynamic
+			    `grid-cols-N`, so the track list is set inline. */}
+			<div
+				className="grid"
+				style={{
+					gridTemplateColumns: `repeat(${MOBILE_TABS.length}, minmax(0, 1fr))`
+				}}
+			>
 				{MOBILE_TABS.map((tab) => (
 					<button
 						key={tab.id}
 						onClick={() => scrollToSection(tab.id, pathname)}
-						className="flex flex-col items-center justify-center gap-1 py-2.5 text-ink-faint hover:text-ink active:text-primary transition-colors min-h-[56px]"
+						className="flex flex-col items-center justify-center gap-1 px-0.5 py-2.5 text-ink-faint hover:text-ink active:text-primary transition-colors min-h-[56px]"
 					>
 						{TAB_ICONS[tab.id]}
 						<span className="text-[11px] font-medium">{tab.label}</span>

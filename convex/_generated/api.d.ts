@@ -8,8 +8,13 @@
  * @module
  */
 
+import type * as committeeAuth from "../committeeAuth.js";
 import type * as contactMessages from "../contactMessages.js";
 import type * as events from "../events.js";
+import type * as feedback from "../feedback.js";
+import type * as feedbackOptions from "../feedbackOptions.js";
+import type * as ideas from "../ideas.js";
+import type * as interest from "../interest.js";
 import type * as payments from "../payments.js";
 import type * as rsvps from "../rsvps.js";
 import type * as seed from "../seed.js";
@@ -22,8 +27,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  committeeAuth: typeof committeeAuth;
   contactMessages: typeof contactMessages;
   events: typeof events;
+  feedback: typeof feedback;
+  feedbackOptions: typeof feedbackOptions;
+  ideas: typeof ideas;
+  interest: typeof interest;
   payments: typeof payments;
   rsvps: typeof rsvps;
   seed: typeof seed;

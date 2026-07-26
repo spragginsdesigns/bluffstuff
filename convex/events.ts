@@ -30,6 +30,37 @@ export const listUpcoming = query({
 	}
 });
 
+// Nobody remembers an event well enough to review it months later, and a
+// stale "how did we do?" list reads as neglect. Only ask about recent ones.
+const FEEDBACK_WINDOW_DAYS = 30;
+
+/**
+ * Recently finished events — the ones worth asking residents about.
+ *
+ * Active only, so archiving still removes an event from the site as documented.
+ * Archived events keep their feedback page; it's reached through the flyer URL,
+ * which also survives archiving.
+ */
+export const listRecentPast = query({
+	args: { localDate: v.optional(v.string()), limit: v.optional(v.number()) },
+	handler: async (ctx, args) => {
+		const today = args.localDate ?? new Date().toISOString().split("T")[0];
+		const cutoff = new Date(today + "T00:00:00");
+		cutoff.setDate(cutoff.getDate() - FEEDBACK_WINDOW_DAYS);
+		const cutoffDate = cutoff.toISOString().split("T")[0];
+
+		const events = await ctx.db
+			.query("events")
+			.withIndex("by_active", (q) => q.eq("isActive", true))
+			.collect();
+
+		return events
+			.filter((e) => e.date < today && e.date >= cutoffDate)
+			.sort((a, b) => b.date.localeCompare(a.date))
+			.slice(0, args.limit ?? 3);
+	}
+});
+
 export const listAll = query({
 	args: {},
 	handler: async (ctx) => {
@@ -116,6 +147,43 @@ export const update = mutation({
 		}
 
 		return await ctx.db.patch(id, cleanUpdates);
+	}
+});
+
+/**
+ * Records what actually happened at an event. Without this number an empty
+ * feedback inbox is unreadable: "nobody was interested" and "everyone said
+ * yes then stayed home" look identical, and they need opposite fixes.
+ */
+export const setAttendance = mutation({
+	args: {
+		id: v.id("events"),
+		attendanceCount: v.number(),
+		attendanceNote: v.optional(v.string()),
+		updaterEmail: v.string(),
+		secret: v.string()
+	},
+	handler: async (ctx, args) => {
+		requireCommitteeSecret(args.secret);
+
+		const user = await ctx.db
+			.query("users")
+			.filter((q) => q.eq(q.field("email"), args.updaterEmail))
+			.first();
+
+		if (!user || user.role !== "committee") {
+			throw new Error("Only committee members can record attendance");
+		}
+
+		if (!Number.isInteger(args.attendanceCount) || args.attendanceCount < 0) {
+			throw new Error("Attendance must be a whole number of people");
+		}
+
+		return await ctx.db.patch(args.id, {
+			attendanceCount: args.attendanceCount,
+			attendanceNote: args.attendanceNote?.trim() || undefined,
+			updatedAt: Date.now()
+		});
 	}
 });
 

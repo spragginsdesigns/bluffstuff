@@ -5,6 +5,8 @@ const isPublicRoute = createRouteMatcher([
 	"/qr",
 	"/flyer(.*)",
 	"/api/flyer(.*)",
+	// Post-event feedback is intentionally login-free — see app/feedback
+	"/feedback(.*)",
 	"/pay(.*)",
 	"/api/checkout",
 	"/sign-in(.*)",

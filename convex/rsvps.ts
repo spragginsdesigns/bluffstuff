@@ -29,6 +29,19 @@ export const getCountByEvent = query({
 	}
 });
 
+/** RSVP totals for every event at once — feeds the committee turnout table. */
+export const countsByEvent = query({
+	args: {},
+	handler: async (ctx) => {
+		const rsvps = await ctx.db.query("rsvps").collect();
+		const counts: Record<string, number> = {};
+		for (const rsvp of rsvps) {
+			counts[rsvp.eventId] = (counts[rsvp.eventId] ?? 0) + 1;
+		}
+		return counts;
+	}
+});
+
 export const create = mutation({
 	args: {
 		eventId: v.id("events"),

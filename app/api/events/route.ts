@@ -104,6 +104,35 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ success: true }, { status: 200 });
 		}
 
+		if (action === "attendance") {
+			const { id, attendanceCount, attendanceNote } = body;
+			if (!id) {
+				return NextResponse.json(
+					{ success: false, error: "id is required." },
+					{ status: 400 }
+				);
+			}
+			const count = Number(attendanceCount);
+			if (!Number.isInteger(count) || count < 0) {
+				return NextResponse.json(
+					{
+						success: false,
+						error: "Attendance must be a whole number of people."
+					},
+					{ status: 400 }
+				);
+			}
+			await convex.mutation(api.events.setAttendance, {
+				id: id as Id<"events">,
+				attendanceCount: count,
+				attendanceNote:
+					typeof attendanceNote === "string" ? attendanceNote : undefined,
+				updaterEmail: email,
+				secret
+			});
+			return NextResponse.json({ success: true }, { status: 200 });
+		}
+
 		if (action === "archive") {
 			const { id } = body;
 			if (!id) {

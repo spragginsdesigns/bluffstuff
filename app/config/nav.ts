@@ -8,6 +8,7 @@ export interface NavLink {
 export const NAV_LINKS: NavLink[] = [
 	{ id: "events", label: "Events" },
 	{ id: "calendar", label: "Calendar" },
+	{ id: "ideas", label: "Ideas" },
 	{ id: "committee", label: "Committee" },
 	{ id: "contact", label: "Contact" }
 ];
@@ -17,5 +18,6 @@ export const MOBILE_TABS: NavLink[] = [
 	{ id: "top", label: "Home" },
 	{ id: "events", label: "Events" },
 	{ id: "calendar", label: "Calendar" },
+	{ id: "ideas", label: "Ideas" },
 	{ id: "contact", label: "Contact" }
 ];

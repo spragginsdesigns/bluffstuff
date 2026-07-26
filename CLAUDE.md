@@ -49,7 +49,7 @@ bluffstuff/
 │   │   ├── MonthlyCalendar.tsx # Monthly calendar with event indicators
 │   │   ├── RsvpModal.tsx   # RSVP form (Convex-backed, auto-fills from Clerk)
 │   │   ├── AttendeesList.tsx   # Real-time attendee list per event
-│   │   ├── CommitteeDashboard.tsx # 3-tab admin panel (Events, Messages, Members)
+│   │   ├── Committee*Tab.tsx    # Admin dashboard tabs (rendered by /admin)
 │   │   ├── ContactForm.tsx # Contact form (Convex-backed)
 │   │   ├── UserSync.tsx    # Clerk → Convex user sync (runs in layout)
 │   │   ├── FAQ.tsx         # Community FAQ
@@ -231,6 +231,28 @@ Priced events (`events.priceCents`, dollars in the form → cents in the DB) get
 - **`buttonClasses` must be imported from `app/components/ui/buttonStyles.ts`** (a plain module) in server components like `/pay/success` — importing it from the `"use client"` `Button.tsx` makes it a client reference and crashes the server render.
 - **Convex deploys are still manual** — `payments.ts` lives in `convex/`, so `npx convex dev --once` + `npx convex deploy` after edits.
 
+### Feedback, Interest & Ideas
+Three anonymous, login-free signals that exist to answer "why did nobody come?". Hard-won constraints:
+
+- **No sign-in, on purpose.** The responses worth having come from people who did NOT attend, and they will not create an account to explain why. `/feedback/*` is a public route in `middleware.ts`. Do not put any of these behind Clerk.
+- **`visitorId` never leaves the server.** A random localStorage id (`app/hooks/useVisitorId.ts`) dedupes taps and votes. Public queries must return explicit field lists — `ideas:list` builds its payload field by field precisely so the submitter's `visitorId` can't leak and de-anonymize the board.
+- **The feedback form leads with "Did you make it?"** The *No* branch (checkbox reasons) is the substantial one; the attendee rating is secondary. Reason keys live in `convex/feedbackOptions.ts` and are shared by the form, the Convex validator, and the dashboard tally — change a `label` freely, never repurpose a `key`.
+- **Feedback is coherent server-side**: `feedback:submit` drops a rating for no-shows and reasons for attendees regardless of what the client sends, and upserts on `(eventId, visitorId)` so resubmitting amends rather than duplicates.
+- **Attendance headcount is the point of the dashboard tab.** Without it, "nobody was interested" and "everyone RSVP'd then stayed home" are indistinguishable. Written via `events:setAttendance` — secret-gated like the other event mutations, through `/api/events` with `action: "attendance"`.
+- **Interest taps are a soft signal, not a headcount.** Deduped per browser, so two devices count twice. RSVPs remain authoritative.
+- **`events:listRecentPast` is active-only and windowed to 30 days.** Archiving an event removes it from the home page's "How Did We Do?" section — its feedback page is still reachable via the flyer URL, which also survives archiving. Don't archive an event until you've collected feedback.
+- **Ideas auto-publish**; the committee hides rather than approves (an approval queue kills the momentum a vote board needs). `ideas:setHidden` gates on Clerk JWT identity via `convex/committeeAuth.ts`, not the shared secret.
+- **Moderation deletes are JWT-gated too** (`contactMessages:remove/setRead`, `ideas:remove`, `feedback:remove`) — same `requireCommittee` helper. `ideas:remove` also deletes that idea's votes so no orphans are left behind. Destructive buttons use `ui/ConfirmButton` (tap to arm, tap to confirm, auto-disarms) — never `window.confirm`, which blocks the page and can't be themed.
+- **The Messages badge counts unread, not total.** `contactMessages.isRead` is optional so existing rows stay valid; absent means unread.
+
+### Admin Dashboard (`/admin`)
+- Lives at its own route, **not** on the home page. Linked from the navbar only when `useIsCommittee()` is true.
+- The page's role check is UX, not the security boundary: every committee query is gated in Convex and every event write goes through the secret-gated `/api/events`. A resident who forced their way in sees empty tabs and failed writes.
+- Tabs are separate components (`Committee*Tab.tsx`) so the page stays readable; the shell owns the shared `events`/`contactMessages` queries and passes them down. Convex dedupes identical subscriptions, so tabs re-querying the same thing is free.
+- The overview surfaces past events with no headcount recorded — the one omission that makes later analysis impossible.
+- **The home page no longer waits on Clerk.** That `!isLoaded` gate existed only to stop the dashboard flashing in; don't reintroduce it.
+- **Convex deploys are still manual** — `npx convex dev --once` + `npx convex deploy` after touching `convex/`.
+
 ## Key Files
 
 | Purpose | Path |
@@ -255,6 +277,16 @@ Priced events (`events.priceCents`, dollars in the form → cents in the DB) get
 | Payment door pass + receipt | `app/pay/success/page.tsx` |
 | Receipt email template | `app/utils/receiptEmail.ts` |
 | Payments table/functions | `convex/payments.ts` |
+| Public feedback page | `app/feedback/[eventId]/page.tsx` |
+| No-show reason options (shared) | `convex/feedbackOptions.ts` |
+| Feedback mutations/queries | `convex/feedback.ts` |
+| Interest taps | `convex/interest.ts` + `app/components/InterestButton.tsx` |
+| Idea board | `convex/ideas.ts` + `app/components/IdeaBoard.tsx` |
+| Anonymous visitor id hook | `app/hooks/useVisitorId.ts` |
+| Committee JWT role helper | `convex/committeeAuth.ts` |
+| Admin dashboard page | `app/admin/page.tsx` |
+| Turnout & feedback dashboard tab | `app/components/CommitteeFeedbackTab.tsx` |
+| Confirm-to-delete control | `app/components/ui/ConfirmButton.tsx` |
 | Server-side Convex reads (no-store) | `app/utils/convexServer.ts` |
 | Type definitions | `types/Event.ts` |
 | Next.js config | `next.config.mjs` |
@@ -269,6 +301,10 @@ Priced events (`events.priceCents`, dollars in the form → cents in the DB) get
 | `rsvps` | Event attendance registrations | `by_event`, `by_email` |
 | `payments` | Online Stripe payments (door-pass records) | `by_event`, `by_session` |
 | `contactMessages` | Contact form submissions | — |
+| `eventFeedback` | Anonymous post-event feedback (attended / why not) | `by_event`, `by_event_visitor` |
+| `eventInterest` | One-tap interest on upcoming events | `by_event`, `by_event_visitor` |
+| `eventIdeas` | Resident event suggestions | `by_hidden` |
+| `ideaVotes` | Upvotes on ideas | `by_idea`, `by_idea_visitor` |
 
 ## Environment Variables
 
