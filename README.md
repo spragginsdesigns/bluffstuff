@@ -33,6 +33,7 @@ committee enters event (website form or trusted agent)
 | Event created via the HTTP API (agent) | Saved to Convex only — **no auto-email**. The agent hands back the flyer link; a committee member clicks "Email to the Printer" on the flyer page. |
 | "Generate Background Art" clicked (flyer page, committee-only) | OpenAI `gpt-image-2` paints a light black-and-white photo texture from the event details (~1 min, once per click — not per render) → stored in Convex file storage → composited behind the poster boxes. Click again to reroll. |
 | Event archived | Removed from the public calendar/RSVP. **Note:** the flyer PNG still renders for anyone holding the direct `/api/flyer/<id>` URL — archive hides, it does not delete. |
+| Archived event deleted | `events:remove` — permanent, and **cascades** to that event's RSVPs, feedback and interest taps. Refuses if the event has `payments` rows, since those are a financial record. Offered in the dashboard on archived events only. |
 
 ### Routes
 
@@ -49,7 +50,7 @@ committee enters event (website form or trusted agent)
 
 ### Write security
 
-Committee write mutations (`events:create/update/archive`, `events:generateUploadUrl`, `events:setEventImage`) require a `secret` argument matching **`COMMITTEE_API_SECRET`** — set per Convex deployment with `npx convex env set COMMITTEE_API_SECRET <value> [--prod]`. Email fields on those mutations are attribution only, not auth.
+Committee write mutations (`events:create/update/archive/remove/setAttendance`, `events:generateUploadUrl`, `events:setEventImage`) require a `secret` argument matching **`COMMITTEE_API_SECRET`** — set per Convex deployment with `npx convex env set COMMITTEE_API_SECRET <value> [--prod]`. Email fields on those mutations are attribution only, not auth.
 
 - **Browsers never hold the secret.** The website writes through `/api/events`, which authenticates with Clerk, checks the committee role, and adds the secret server-side.
 - **Trusted agents** (e.g. Echo) call the Convex HTTP API directly and include the secret in `args`:

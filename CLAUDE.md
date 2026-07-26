@@ -261,6 +261,7 @@ One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with Q
 - **Convex deploys are manual.** After editing `convex/`: `npx convex dev --once` (dev) and `npx convex deploy` (prod) — Vercel only builds Next.js.
 - Flyer fonts (Anton, Poppins) are checked into `app/fonts/` and loaded via `fetch(new URL(..., import.meta.url))`.
 - Archiving an event hides it from the site but the flyer URL still renders — archive ≠ delete.
+- **`events:remove` is the only true delete, and it cascades** — the event's RSVPs, feedback and interest taps go with it. It **refuses when the event has `payments` rows**: those are the receipt trail for money that actually changed hands, so archive that one instead. Secret-gated like the rest of `events:*`; the dashboard offers it only on already-archived events, through `/api/events` with `action: "delete"`.
 - **Reads use Clerk↔Convex JWT auth.** `ConvexProviderWithClerk` (inside ClerkProvider — order matters) sends the Clerk JWT; committee-only queries check `ctx.auth.getUserIdentity()` — never a client-supplied email. Public queries must return sanitized fields only (`rsvps:getByEvent` → names, no PII). Requires: JWT template named "convex" in Clerk (created via Backend API), `CLERK_JWT_ISSUER_DOMAIN` set on both Convex deployments, `convex/auth.config.ts`.
 
 ### Payments (Stripe) — full reference in `Docs/payments.md`

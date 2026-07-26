@@ -133,6 +133,36 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ success: true }, { status: 200 });
 		}
 
+		// Permanent, cascading delete. The UI only offers it on archived events;
+		// the Convex mutation additionally refuses when payments are attached.
+		if (action === "delete") {
+			const { id } = body;
+			if (!id) {
+				return NextResponse.json(
+					{ success: false, error: "id is required." },
+					{ status: 400 }
+				);
+			}
+			try {
+				const result = await convex.mutation(api.events.remove, {
+					id: id as Id<"events">,
+					deleterEmail: email,
+					secret
+				});
+				return NextResponse.json({ success: true, result }, { status: 200 });
+			} catch (error) {
+				// Surface the refusal reason (e.g. attached payments) to the UI
+				const message =
+					error instanceof Error && error.message.includes("Refusing")
+						? "That event has payment records — archive it instead."
+						: "Could not delete that event.";
+				return NextResponse.json(
+					{ success: false, error: message },
+					{ status: 409 }
+				);
+			}
+		}
+
 		if (action === "archive") {
 			const { id } = body;
 			if (!id) {

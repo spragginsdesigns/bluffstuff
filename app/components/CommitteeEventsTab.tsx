@@ -6,6 +6,7 @@ import { Doc } from "@/convex/_generated/dataModel";
 import { ConvexEvent } from "@/types/Event";
 import EventFormModal from "./EventFormModal";
 import Button from "./ui/Button";
+import ConfirmButton from "./ui/ConfirmButton";
 
 interface CommitteeEventsTabProps {
 	events: Doc<"events">[] | undefined;
@@ -24,12 +25,29 @@ export default function CommitteeEventsTab({
 	const [eventFilter, setEventFilter] = useState<EventFilter>("active");
 	const [showAllFilteredEvents, setShowAllFilteredEvents] = useState(false);
 
+	const [deleteError, setDeleteError] = useState<string | null>(null);
+
 	const handleArchive = async (eventId: ConvexEvent["_id"]) => {
 		await fetch("/api/events", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ action: "archive", id: eventId })
 		});
+	};
+
+	// Only offered on archived events — archiving is the normal retirement
+	// path, and this also takes the event's RSVPs and feedback with it.
+	const handleDelete = async (eventId: ConvexEvent["_id"]) => {
+		setDeleteError(null);
+		const res = await fetch("/api/events", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ action: "delete", id: eventId })
+		});
+		if (!res.ok) {
+			const data = await res.json().catch(() => null);
+			setDeleteError(data?.error ?? "Could not delete that event.");
+		}
 	};
 
 	const filterCounts = useMemo(() => {
@@ -97,6 +115,12 @@ export default function CommitteeEventsTab({
 					</button>
 				))}
 			</div>
+
+			{deleteError && (
+				<p className="mb-4 p-3 rounded-xl bg-danger-soft text-danger text-sm">
+					{deleteError}
+				</p>
+			)}
 
 			{events === undefined ? (
 				<div className="flex justify-center py-8">
@@ -186,13 +210,20 @@ export default function CommitteeEventsTab({
 											>
 												Edit
 											</button>
-											{event.isActive && (
+											{event.isActive ? (
 												<button
 													onClick={() => handleArchive(event._id)}
 													className="px-3 py-1.5 rounded-lg text-sm text-danger bg-danger-soft hover:bg-danger-soft/70 transition-colors"
 												>
 													Archive
 												</button>
+											) : (
+												<ConfirmButton
+													label="Delete"
+													confirmLabel="Delete for good?"
+													ariaLabel={`Permanently delete ${event.title} and its RSVPs`}
+													onConfirm={() => handleDelete(event._id)}
+												/>
 											)}
 										</div>
 									</div>

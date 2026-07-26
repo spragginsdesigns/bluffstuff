@@ -187,6 +187,78 @@ export const setAttendance = mutation({
 	}
 });
 
+/**
+ * Permanently deletes an event and everything scoped to it — RSVPs, feedback
+ * and interest taps. Archiving is the normal way to retire an event; this
+ * exists for clearing test rows that would otherwise clutter the dashboard
+ * forever.
+ *
+ * Refuses when the event has payment records attached: those are the receipt
+ * trail for money that actually changed hands, and no cleanup convenience is
+ * worth deleting them. Archive that event instead.
+ */
+export const remove = mutation({
+	args: {
+		id: v.id("events"),
+		deleterEmail: v.string(),
+		secret: v.string()
+	},
+	handler: async (ctx, args) => {
+		requireCommitteeSecret(args.secret);
+
+		const user = await ctx.db
+			.query("users")
+			.filter((q) => q.eq(q.field("email"), args.deleterEmail))
+			.first();
+
+		if (!user || user.role !== "committee") {
+			throw new Error("Only committee members can delete events");
+		}
+
+		const event = await ctx.db.get(args.id);
+		if (!event) {
+			throw new Error("Event not found");
+		}
+
+		const payments = await ctx.db
+			.query("payments")
+			.withIndex("by_event", (q) => q.eq("eventId", args.id))
+			.collect();
+		if (payments.length > 0) {
+			throw new Error(
+				`Refusing to delete "${event.title}": it has ${payments.length} payment record(s). Archive it instead.`
+			);
+		}
+
+		const rsvps = await ctx.db
+			.query("rsvps")
+			.withIndex("by_event", (q) => q.eq("eventId", args.id))
+			.collect();
+		const feedback = await ctx.db
+			.query("eventFeedback")
+			.withIndex("by_event", (q) => q.eq("eventId", args.id))
+			.collect();
+		const interest = await ctx.db
+			.query("eventInterest")
+			.withIndex("by_event", (q) => q.eq("eventId", args.id))
+			.collect();
+
+		for (const row of [...rsvps, ...feedback, ...interest]) {
+			await ctx.db.delete(row._id);
+		}
+		await ctx.db.delete(args.id);
+
+		return {
+			title: event.title,
+			deleted: {
+				rsvps: rsvps.length,
+				feedback: feedback.length,
+				interest: interest.length
+			}
+		};
+	}
+});
+
 export const generateUploadUrl = mutation({
 	args: { requesterEmail: v.string(), secret: v.string() },
 	handler: async (ctx, args) => {
