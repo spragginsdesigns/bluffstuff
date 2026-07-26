@@ -98,6 +98,8 @@ pnpm start
 
 - **Never run a build while the dev server is running.** `next dev` and `next build` share `.next/`, and the build clobbers the dev server's chunks. The symptom is confusing: the dev server keeps returning 200 for pages but 404s its own `main-app.js` / `app-pages-internals.js`, so every page hangs on a loading spinner with a clean console. Fix: stop dev, `rm -rf .next`, restart. Stop the dev server *first* if you need to build.
 - **`pnpm --ignore-workspace <script>` wants to purge `node_modules`.** The flag changes pnpm's config hash, so it tries a reinstall and aborts with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`. Don't force it. Invoke the tool directly instead — `npx next dev`, `npx next build`, `npx tsc --noEmit` — which is exactly what the package scripts run.
+- **NEVER add `pnpm-workspace.yaml` to this repo.** Vercel pins **pnpm 9** here (chosen by project creation date), and pnpm 9 treats that file as a workspace declaration — it fails the install outright with `ERROR packages field missing or empty`, which fails every production deploy in 3 seconds. This is not a workspace and must not look like one. It was added once to silence a *local* pnpm 11 complaint and broke four consecutive production deploys before anyone noticed, because a failed Vercel build leaves the previous deployment serving happily.
+- Local pnpm 11 refuses to run dependency postinstall scripts and exits non-zero (`ERR_PNPM_IGNORED_BUILDS`). Harmless here — `next build` and the Convex CLI both work without them — so ignore the exit code rather than "fixing" it with a config file that breaks Vercel.
 
 ---
 
