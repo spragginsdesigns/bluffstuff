@@ -80,26 +80,30 @@ bluffstuff/
 
 ## Development Commands
 
+**This project uses Bun.** `bun.lock` is the lockfile; there is no pnpm lockfile and pnpm must not be reintroduced.
+
 ```bash
 # Start dev server (Claude should NOT run this - assume it's running)
-pnpm dev
+bun run dev
 
 # Lint
-pnpm lint
+bun run lint
 
 # Build
-pnpm build
+bun run build
 
-# Start production
-pnpm start
+# Install / add a dependency
+bun install
+bun add <pkg>
 ```
 
-**Two local gotchas that cost real time — read before running any of the above:**
+**Gotchas that cost real time — read before running any of the above:**
 
-- **Never run a build while the dev server is running.** `next dev` and `next build` share `.next/`, and the build clobbers the dev server's chunks. The symptom is confusing: the dev server keeps returning 200 for pages but 404s its own `main-app.js` / `app-pages-internals.js`, so every page hangs on a loading spinner with a clean console. Fix: stop dev, `rm -rf .next`, restart. Stop the dev server *first* if you need to build.
-- **`pnpm --ignore-workspace <script>` wants to purge `node_modules`.** The flag changes pnpm's config hash, so it tries a reinstall and aborts with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`. Don't force it. Invoke the tool directly instead — `npx next dev`, `npx next build`, `npx tsc --noEmit` — which is exactly what the package scripts run.
-- **NEVER add `pnpm-workspace.yaml` to this repo.** Vercel pins **pnpm 9** here (chosen by project creation date), and pnpm 9 treats that file as a workspace declaration — it fails the install outright with `ERROR packages field missing or empty`, which fails every production deploy in 3 seconds. This is not a workspace and must not look like one. It was added once to silence a *local* pnpm 11 complaint and broke four consecutive production deploys before anyone noticed, because a failed Vercel build leaves the previous deployment serving happily.
-- Local pnpm 11 refuses to run dependency postinstall scripts and exits non-zero (`ERR_PNPM_IGNORED_BUILDS`). Harmless here — `next build` and the Convex CLI both work without them — so ignore the exit code rather than "fixing" it with a config file that breaks Vercel.
+- **Never run a build while the dev server is running.** `next dev` and `next build` share `.next/`, and the build clobbers the dev server's chunks. The symptom is confusing: the dev server keeps returning 200 for pages but 404s its own `main-app.js` / `app-pages-internals.js`, so every page hangs on a loading spinner with a clean console. Fix: stop dev, delete `.next`, restart. Stop the dev server *first* if you need to build.
+- **Vercel picks the package manager from the lockfile** — the install command is left on auto-detect, so `bun.lock` is what makes it run `bun install`. Don't commit a second lockfile; two would make the choice ambiguous.
+- **Bun blocks dependency postinstall scripts by default** (`@clerk/shared`, `unrs-resolver` here). It does *not* fail the install over it, and both `next build` and the Convex CLI work without them — so leave it alone. Only `bun pm trust` a package if something demonstrably breaks.
+- **`error: Fail extracting tarball` on `bun install`** is a corrupt download cache, not a real dependency problem. `bun pm cache rm`, delete `node_modules`, install again.
+- **Do not reintroduce pnpm.** Vercel pins pnpm 9 for this project by creation date, and pnpm 9 fails on anything written for pnpm 10/11. A `pnpm-workspace.yaml` added to satisfy local pnpm 11 once broke four consecutive production deploys — and it went unnoticed for half an hour, because a failed Vercel build leaves the previous deployment serving happily. **A green site is not evidence that your last push deployed.**
 
 ---
 
@@ -111,16 +115,19 @@ pnpm start
 
 ```bash
 # 1. Verify. Dev server must be STOPPED for the build (see gotcha above).
-npx tsc --noEmit
-npx next build
+bunx tsc --noEmit
+bun run build
 
 # 2. Convex to prod FIRST — required whenever anything in convex/ changed
-npx convex deploy -y          # -> festive-mink-675 (prod)
+bunx convex deploy -y         # -> festive-mink-675 (prod)
 
 # 3. Then commit + push. Stage only files you touched; never `git add -A`.
 git add <specific files>
 git commit -m "type(scope): ..."
 git push origin main          # Vercel picks it up
+
+# 4. CONFIRM THE DEPLOY WENT GREEN — a failed build leaves the old one serving
+vercel ls --prod              # top entry must be ● Ready, not ● Error
 ```
 
 **Verify prod afterwards — deploying is not the same as working.** Convex has no admin UI check from the CLI, so query the deployment directly:

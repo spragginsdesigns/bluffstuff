@@ -146,11 +146,14 @@ Until then the site sends as `GMAIL_USER`, which is the intended fallback. Pract
 
 ## Development
 
+Package manager is **Bun** (`bun.lock`). Vercel detects the lockfile and installs with Bun too.
+
 ```bash
-pnpm dev                # dev server (localhost:3000)
-npx convex dev --once   # push convex/ functions to the DEV deployment (run after pulling convex changes)
-pnpm lint
-pnpm build
+bun install             # dependencies
+bun run dev             # dev server (localhost:3000)
+bunx convex dev --once  # push convex/ functions to the DEV deployment (run after pulling convex changes)
+bun run lint
+bun run build
 ```
 
 ## Deploying
