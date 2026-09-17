@@ -3,13 +3,17 @@
 import { useTheme } from "./ThemeProvider";
 
 export default function ThemeToggle() {
-	const { toggle } = useTheme();
+	const { theme, toggle } = useTheme();
 
 	return (
 		<button
 			type="button"
 			onClick={toggle}
-			aria-label="Toggle light or dark theme"
+			aria-pressed={theme === "dark"}
+			aria-label={
+				theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+			}
+			title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
 			className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
 		>
 			{/* Sun — shown in dark mode (icons swap via CSS so SSR never mismatches) */}

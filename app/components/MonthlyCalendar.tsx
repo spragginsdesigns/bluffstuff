@@ -32,8 +32,10 @@ export default function MonthlyCalendar({
 	const today = new Date();
 	const [currentMonth, setCurrentMonth] = useState(today.getMonth());
 	const [currentYear, setCurrentYear] = useState(today.getFullYear());
+	const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
 	const navigateMonth = (direction: -1 | 1) => {
+		setSelectedDay(null);
 		const newMonth = currentMonth + direction;
 		if (newMonth < 0) {
 			setCurrentMonth(11);
@@ -83,6 +85,16 @@ export default function MonthlyCalendar({
 		today.getMonth() === currentMonth && today.getFullYear() === currentYear
 			? today.getDate()
 			: -1;
+
+	// A tapped day filters the list below to just that day's events, so days
+	// with multiple events don't hide all but the first one.
+	const selectedDayEvents = selectedDay
+		? (eventsByDay.get(selectedDay) ?? null)
+		: null;
+	const listEvents = selectedDayEvents ?? monthEvents;
+	const listTitle = selectedDayEvents
+		? `Events on ${MONTHS[currentMonth]} ${selectedDay}`
+		: "Events This Month";
 
 	return (
 		<div>
@@ -155,31 +167,36 @@ export default function MonthlyCalendar({
 					const day = i + 1;
 					const dayEvents = eventsByDay.get(day);
 					const isToday = day === todayDay;
+					const isSelected = day === selectedDay;
 
 					return (
 						<motion.div
 							key={day}
 							whileHover={dayEvents ? { scale: 1.05 } : {}}
 							className={`aspect-square rounded-lg flex flex-col items-center justify-center relative text-sm md:text-base transition-colors ${
-								isToday
-									? "ring-2 ring-primary bg-primary-soft"
-									: dayEvents
-										? "bg-primary-soft cursor-pointer hover:bg-primary-soft/70"
-										: "text-ink-faint"
+								isSelected
+									? "ring-2 ring-primary bg-primary cursor-pointer"
+									: isToday
+										? "ring-2 ring-primary bg-primary-soft"
+										: dayEvents
+											? "bg-primary-soft cursor-pointer hover:bg-primary-soft/70"
+											: "text-ink-faint"
 							}`}
 							onClick={() => {
 								if (dayEvents && dayEvents.length > 0) {
-									onEventClick(dayEvents[0]);
+									setSelectedDay(isSelected ? null : day);
 								}
 							}}
 						>
 							<span
 								className={`${
-									isToday
-										? "text-primary-strong font-bold"
-										: dayEvents
-											? "text-primary-strong font-medium"
-											: ""
+									isSelected
+										? "text-primary-fg font-bold"
+										: isToday
+											? "text-primary-strong font-bold"
+											: dayEvents
+												? "text-primary-strong font-medium"
+												: ""
 								}`}
 							>
 								{day}
@@ -189,7 +206,9 @@ export default function MonthlyCalendar({
 									{dayEvents.slice(0, 3).map((_, idx) => (
 										<div
 											key={idx}
-											className="w-1.5 h-1.5 rounded-full bg-primary"
+											className={`w-1.5 h-1.5 rounded-full ${
+												isSelected ? "bg-primary-fg" : "bg-primary"
+											}`}
 										/>
 									))}
 								</div>
@@ -201,18 +220,26 @@ export default function MonthlyCalendar({
 
 			{/* Events for this month */}
 			<AnimatePresence mode="wait">
-				{monthEvents.length > 0 ? (
+				{listEvents.length > 0 ? (
 					<motion.div
-						key={`${currentMonth}-${currentYear}`}
+						key={`${currentMonth}-${currentYear}-${selectedDay ?? "all"}`}
 						initial={{ opacity: 0, y: 10 }}
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: -10 }}
 						className="space-y-3"
 					>
-						<h4 className="text-lg font-semibold text-ink mb-4">
-							Events This Month
-						</h4>
-						{monthEvents.map((event) => {
+						<div className="flex items-center justify-between mb-4">
+							<h4 className="text-lg font-semibold text-ink">{listTitle}</h4>
+							{selectedDayEvents && (
+								<button
+									onClick={() => setSelectedDay(null)}
+									className="text-sm text-primary hover:text-primary-strong font-medium transition-colors"
+								>
+									Show whole month
+								</button>
+							)}
+						</div>
+						{listEvents.map((event) => {
 							const eventDate = new Date(event.date + "T00:00:00");
 							return (
 								<motion.button

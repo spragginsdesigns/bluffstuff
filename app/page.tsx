@@ -21,7 +21,9 @@ const EVENTS_PREVIEW_COUNT = 6;
 export default function Home() {
 	const localDate = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in user's timezone
 	const upcomingEventsRaw = useQuery(api.events.listUpcoming, { localDate });
-	// Treat undefined (still loading / connection issue) as empty so the page doesn't spin forever
+	// undefined means the query is still loading — show a spinner rather than
+	// flashing the "no events" empty state at every visitor on a slow network.
+	const isLoading = upcomingEventsRaw === undefined;
 	const upcomingEvents = upcomingEventsRaw ?? [];
 	const [showAllEvents, setShowAllEvents] = useState(false);
 
@@ -38,13 +40,11 @@ export default function Home() {
 
 	return (
 		<main className="min-h-screen">
-			<Hero nextEvent={nextEvent} />
+			<Hero nextEvent={nextEvent} isLoading={isLoading} />
 
-			<motion.div
-				initial={{ opacity: 0 }}
-				animate={{ opacity: 1 }}
-				transition={{ duration: 0.5 }}
-			>
+			{/* Plain wrapper, not motion.div: an opacity-0 mount animation hides
+			    the whole SSR'd page until hydration on slow phones. */}
+			<div>
 				{/* Events Section */}
 				<section
 					id="events"
@@ -59,7 +59,15 @@ export default function Home() {
 						</p>
 					</div>
 
-					{upcomingEvents.length === 0 ? (
+					{isLoading ? (
+						<div className="flex justify-center py-12">
+							<div
+								className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"
+								role="status"
+								aria-label="Loading events"
+							/>
+						</div>
+					) : upcomingEvents.length === 0 ? (
 						<div className="text-center py-12">
 							<div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-2 flex items-center justify-center">
 								<svg
@@ -162,12 +170,9 @@ export default function Home() {
 						</p>
 
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-							{COMMITTEE_MEMBERS.map((member, index) => (
-								<motion.div
+							{COMMITTEE_MEMBERS.map((member) => (
+								<div
 									key={member.name}
-									initial={{ opacity: 0, y: 15 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: index * 0.1 }}
 									className="p-5 rounded-2xl bg-surface border border-border shadow-card hover:border-primary/40 transition-all duration-300"
 								>
 									<div className="flex items-center gap-3 mb-2">
@@ -186,7 +191,7 @@ export default function Home() {
 									<p className="text-ink-muted text-sm">
 										{member.description}
 									</p>
-								</motion.div>
+								</div>
 							))}
 						</div>
 
@@ -214,7 +219,7 @@ export default function Home() {
 
 				{/* Contact Form */}
 				<ContactForm />
-			</motion.div>
+			</div>
 		</main>
 	);
 }

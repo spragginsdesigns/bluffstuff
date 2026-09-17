@@ -56,6 +56,24 @@
 	--ring: 224 113 74;
 }
 
+/* CSS entry animation that also runs on SSR'd HTML — unlike framer-motion
+ * mount animations, it does not hide content until hydration. */
+@media (prefers-reduced-motion: no-preference) {
+	@keyframes rise-in {
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+	.animate-rise {
+		animation: rise-in 0.6s ease-out both;
+	}
+}
+
 body {
 	@apply bg-bg text-ink;
 	font-size: 1.0625rem; /* 17px base — readability for older residents */

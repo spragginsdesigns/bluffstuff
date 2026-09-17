@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -33,19 +33,29 @@ export default function RsvpModal({
 	eventLocation,
 	onClose
 }: RsvpModalProps) {
-	const { user } = useUser();
+	const { user, isLoaded } = useUser();
 	const createRsvp = useMutation(api.rsvps.create);
 
-	const [name, setName] = useState(user?.fullName ?? "");
-	const [email, setEmail] = useState(
-		user?.primaryEmailAddress?.emailAddress ?? ""
-	);
+	const [name, setName] = useState("");
+	const [email, setEmail] = useState("");
+	const [nameTouched, setNameTouched] = useState(false);
+	const [emailTouched, setEmailTouched] = useState(false);
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [notes, setNotes] = useState("");
 	const [status, setStatus] = useState<
 		"idle" | "submitting" | "success" | "error"
 	>("idle");
 	const [errorMessage, setErrorMessage] = useState("");
+
+	// Clerk's user resolves after first render, so the fields can't be seeded
+	// from useState initializers — fill them once the profile arrives, as long
+	// as the resident hasn't started typing.
+	useEffect(() => {
+		if (!isLoaded || !user) return;
+		if (!nameTouched && user.fullName) setName(user.fullName);
+		const primaryEmail = user.primaryEmailAddress?.emailAddress;
+		if (!emailTouched && primaryEmail) setEmail(primaryEmail);
+	}, [isLoaded, user, nameTouched, emailTouched]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -148,7 +158,10 @@ export default function RsvpModal({
 							type="text"
 							required
 							value={name}
-							onChange={(e) => setName(e.target.value)}
+							onChange={(e) => {
+								setNameTouched(true);
+								setName(e.target.value);
+							}}
 						/>
 					</Field>
 					<Field label="Email" htmlFor="rsvp-email" required>
@@ -157,7 +170,10 @@ export default function RsvpModal({
 							type="email"
 							required
 							value={email}
-							onChange={(e) => setEmail(e.target.value)}
+							onChange={(e) => {
+								setEmailTouched(true);
+								setEmail(e.target.value);
+							}}
 						/>
 					</Field>
 					<Field label="Phone (optional)" htmlFor="rsvp-phone">

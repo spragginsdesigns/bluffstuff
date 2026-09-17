@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { MOBILE_TABS } from "../config/nav";
 import { scrollToSection } from "../utils/scroll";
@@ -89,6 +90,36 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
 
 export default function MobileTabBar() {
 	const pathname = usePathname();
+	const [activeId, setActiveId] = useState<string>("top");
+
+	// Scroll-spy: highlight the tab for the section currently on screen.
+	useEffect(() => {
+		if (pathname !== "/") return;
+		const sectionIds = MOBILE_TABS.map((t) => t.id).filter(
+			(id) => id !== "top"
+		);
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) setActiveId(entry.target.id);
+				});
+			},
+			// Fires when a section crosses the middle band of the viewport.
+			{ rootMargin: "-40% 0px -55% 0px" }
+		);
+		sectionIds.forEach((id) => {
+			const el = document.getElementById(id);
+			if (el) observer.observe(el);
+		});
+		const onScroll = () => {
+			if (window.scrollY < 200) setActiveId("top");
+		};
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => {
+			observer.disconnect();
+			window.removeEventListener("scroll", onScroll);
+		};
+	}, [pathname]);
 
 	// Only useful on the single-page home layout
 	if (pathname !== "/") return null;
@@ -106,16 +137,27 @@ export default function MobileTabBar() {
 					gridTemplateColumns: `repeat(${MOBILE_TABS.length}, minmax(0, 1fr))`
 				}}
 			>
-				{MOBILE_TABS.map((tab) => (
-					<button
-						key={tab.id}
-						onClick={() => scrollToSection(tab.id, pathname)}
-						className="flex flex-col items-center justify-center gap-1 px-0.5 py-2.5 text-ink-faint hover:text-ink active:text-primary transition-colors min-h-[56px]"
-					>
-						{TAB_ICONS[tab.id]}
-						<span className="text-[11px] font-medium">{tab.label}</span>
-					</button>
-				))}
+				{MOBILE_TABS.map((tab) => {
+					const isActive = activeId === tab.id;
+					return (
+						<button
+							key={tab.id}
+							onClick={() => {
+								setActiveId(tab.id);
+								scrollToSection(tab.id, pathname);
+							}}
+							aria-current={isActive ? "true" : undefined}
+							className={`flex flex-col items-center justify-center gap-1 px-0.5 py-2.5 transition-colors min-h-[56px] ${
+								isActive
+									? "text-primary"
+									: "text-ink-faint hover:text-ink active:text-primary"
+							}`}
+						>
+							{TAB_ICONS[tab.id]}
+							<span className="text-[11px] font-medium">{tab.label}</span>
+						</button>
+					);
+				})}
 			</div>
 		</nav>
 	);

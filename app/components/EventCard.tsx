@@ -25,6 +25,7 @@ export default function EventCard({ event }: EventCardProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isAttendeesListOpen, setIsAttendeesListOpen] = useState(false);
 	const [isPaying, setIsPaying] = useState(false);
+	const [payError, setPayError] = useState("");
 
 	const price =
 		event.priceCents && event.priceCents > 0
@@ -36,6 +37,7 @@ export default function EventCard({ event }: EventCardProps) {
 
 	const handlePay = async () => {
 		setIsPaying(true);
+		setPayError("");
 		try {
 			const res = await fetch("/api/checkout", {
 				method: "POST",
@@ -48,8 +50,13 @@ export default function EventCard({ event }: EventCardProps) {
 				return;
 			}
 			throw new Error(data.error ?? "Could not start the payment");
-		} catch {
+		} catch (err) {
 			setIsPaying(false);
+			setPayError(
+				err instanceof Error && err.message
+					? err.message
+					: "Could not start the payment. Please try again, or pay cash at the door."
+			);
 		}
 	};
 
@@ -188,6 +195,11 @@ export default function EventCard({ event }: EventCardProps) {
 									? "Opening secure checkout..."
 									: `Pay Online — ${price}`}
 							</Button>
+						)}
+						{payError && (
+							<p className="p-3 rounded-lg bg-danger-soft text-danger text-sm">
+								{payError}
+							</p>
 						)}
 						<InterestButton eventId={event._id} />
 					</div>

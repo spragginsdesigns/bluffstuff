@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ConvexEvent } from "@/types/Event";
@@ -12,6 +11,7 @@ import { scrollToSection } from "../utils/scroll";
 
 interface HeroProps {
 	nextEvent: ConvexEvent | null;
+	isLoading?: boolean;
 }
 
 const quickActions = [
@@ -97,7 +97,7 @@ const quickActions = [
 	}
 ];
 
-export default function Hero({ nextEvent }: HeroProps) {
+export default function Hero({ nextEvent, isLoading = false }: HeroProps) {
 	const [isRsvpOpen, setIsRsvpOpen] = useState(false);
 	const rsvpCount = useQuery(
 		api.rsvps.getCountByEvent,
@@ -116,12 +116,9 @@ export default function Hero({ nextEvent }: HeroProps) {
 				<div className="flex flex-col lg:flex-row lg:items-center gap-10 lg:gap-14">
 					{/* Left: headline + actions */}
 					<div className="w-full lg:w-1/2 text-center lg:text-left">
-						<motion.div
-							initial={{ opacity: 0, y: 16 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5 }}
-							className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-border shadow-card mb-6"
-						>
+						{/* CSS animation (not framer-motion) so the hero animates even
+						    before hydration — SSR'd content is never invisible. */}
+						<div className="animate-rise inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-border shadow-card mb-6">
 							<Image
 								src="/logo.png"
 								alt=""
@@ -132,34 +129,28 @@ export default function Hero({ nextEvent }: HeroProps) {
 							<span className="text-sm text-ink-muted font-medium">
 								Woodward Bluffs Activities Committee
 							</span>
-						</motion.div>
+						</div>
 
-						<motion.h1
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.6 }}
-							className="font-display text-4xl md:text-5xl lg:text-[3.4rem] font-bold leading-tight mb-5 text-ink"
+						<h1
+							className="animate-rise font-display text-4xl md:text-5xl lg:text-[3.4rem] font-bold leading-tight mb-5 text-ink"
+							style={{ animationDelay: "0.05s" }}
 						>
 							What&apos;s happening at{" "}
 							<span className="text-primary">Woodward Bluffs</span>?
-						</motion.h1>
+						</h1>
 
-						<motion.p
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.6, delay: 0.1 }}
-							className="text-lg md:text-xl mb-8 text-ink-muted max-w-xl mx-auto lg:mx-0 leading-relaxed"
+						<p
+							className="animate-rise text-lg md:text-xl mb-8 text-ink-muted max-w-xl mx-auto lg:mx-0 leading-relaxed"
+							style={{ animationDelay: "0.1s" }}
 						>
 							Potlucks, parties, and get-togethers with your neighbors — find an
 							event, RSVP in seconds, and we&apos;ll save you a seat.
-						</motion.p>
+						</p>
 
 						{/* Quick actions */}
-						<motion.div
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.6, delay: 0.2 }}
-							className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto lg:mx-0"
+						<div
+							className="animate-rise grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto lg:mx-0"
+							style={{ animationDelay: "0.15s" }}
 						>
 							{quickActions.map((action) => (
 								<button
@@ -173,15 +164,13 @@ export default function Hero({ nextEvent }: HeroProps) {
 									</span>
 								</button>
 							))}
-						</motion.div>
+						</div>
 					</div>
 
 					{/* Right: park photo + next event card */}
-					<motion.div
-						initial={{ opacity: 0, y: 24 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.6, delay: 0.15 }}
-						className="w-full lg:w-1/2"
+					<div
+						className="animate-rise w-full lg:w-1/2"
+						style={{ animationDelay: "0.15s" }}
 					>
 						<div className="max-w-lg mx-auto lg:ml-auto">
 							<div className="rounded-3xl border border-border shadow-lifted overflow-hidden">
@@ -196,7 +185,26 @@ export default function Hero({ nextEvent }: HeroProps) {
 								/>
 							</div>
 
-							{nextEvent && eventDate ? (
+							{isLoading ? (
+								<div
+									className="relative bg-surface rounded-3xl border border-border shadow-lifted p-6 md:p-7 -mt-14 mx-4 md:mx-6 animate-pulse"
+									aria-busy="true"
+									aria-label="Loading next event"
+								>
+									<div className="flex items-start justify-between gap-4 mb-4">
+										<div className="flex-1">
+											<div className="h-3 w-20 rounded bg-surface-2 mb-3" />
+											<div className="h-7 w-3/4 rounded bg-surface-2" />
+										</div>
+										<div className="h-16 w-16 rounded-2xl bg-surface-2 flex-shrink-0" />
+									</div>
+									<div className="space-y-2 mb-5">
+										<div className="h-4 w-2/3 rounded bg-surface-2" />
+										<div className="h-4 w-1/2 rounded bg-surface-2" />
+									</div>
+									<div className="h-11 w-full rounded-xl bg-surface-2" />
+								</div>
+							) : nextEvent && eventDate ? (
 								<div className="relative bg-surface rounded-3xl border border-border shadow-lifted p-6 md:p-7 -mt-14 mx-4 md:mx-6">
 									<div className="flex items-start justify-between gap-4 mb-4">
 										<div>
@@ -339,7 +347,7 @@ export default function Hero({ nextEvent }: HeroProps) {
 								</div>
 							)}
 						</div>
-					</motion.div>
+					</div>
 				</div>
 			</div>
 

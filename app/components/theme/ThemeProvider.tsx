@@ -37,8 +37,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			: "light"
 	);
 
-	const setTheme = useCallback((next: Theme) => {
-		setThemeState(next);
+	// Applies a theme to the DOM + storage. Called from event handlers only —
+	// NEVER from inside a setState updater. React may invoke updaters more
+	// than once (retried/discarded concurrent renders), so side effects in an
+	// updater can run twice: the class flips back while state moves on, and a
+	// click appears to "do nothing" until clicked again.
+	const applyTheme = useCallback((next: Theme) => {
 		document.documentElement.classList.toggle("dark", next === "dark");
 		try {
 			localStorage.setItem(THEME_STORAGE_KEY, next);
@@ -50,21 +54,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			.forEach((el) => el.setAttribute("content", THEME_COLORS[next]));
 	}, []);
 
+	const setTheme = useCallback(
+		(next: Theme) => {
+			applyTheme(next);
+			setThemeState(next);
+		},
+		[applyTheme]
+	);
+
 	const toggle = useCallback(() => {
-		setThemeState((current) => {
-			const next: Theme = current === "dark" ? "light" : "dark";
-			document.documentElement.classList.toggle("dark", next === "dark");
-			try {
-				localStorage.setItem(THEME_STORAGE_KEY, next);
-			} catch {
-				// ignore
-			}
-			document
-				.querySelectorAll('meta[name="theme-color"]')
-				.forEach((el) => el.setAttribute("content", THEME_COLORS[next]));
-			return next;
-		});
-	}, []);
+		setTheme(theme === "dark" ? "light" : "dark");
+	}, [theme, setTheme]);
 
 	const value = useMemo(
 		() => ({ theme, setTheme, toggle }),
