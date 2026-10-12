@@ -23,6 +23,7 @@ A pass over the places where a resident could get stuck, see a confusing error, 
 - Bigger text in the bottom tab bar, the calendar and error messages; bigger buttons (at least 44 pixels) for closing windows, the menu, the calendar arrows and footer links. Each calendar day is now a real button, and tapping one scrolls to that day's events.
 - Phones set to reduce motion no longer get the animations, and the FAQ and contact form show up right away on slow phones instead of waiting to fade in.
 - Sharing an event now includes the date, time and place in the message, not just the link.
+- On a computer, the "Aa" display settings window opens in the middle of the screen. It used to stick to the left edge because it opened from inside the blurred navbar; every pop-up window is now placed on the page itself (`ui/Modal` portals to `<body>`).
 
 **For the committee**
 - Online payments now record how many people each payment covers, so the door count matches.
