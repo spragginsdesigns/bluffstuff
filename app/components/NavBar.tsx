@@ -3,13 +3,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "../config/nav";
 import { scrollToSection } from "../utils/scroll";
 import { useIsCommittee } from "../hooks/useIsCommittee";
-import { buttonClasses } from "./ui/Button";
-import ThemeToggle from "./theme/ThemeToggle";
+import DisplaySettings from "./theme/DisplaySettings";
+
+// No "Sign In" button here on purpose. Residents never need an account, and a
+// prominent sign-in button tells them they do. The committee signs in from
+// the footer link; anyone who wants synced settings finds the optional
+// sign-in inside DisplaySettings.
 
 export default function NavBar() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -68,14 +72,7 @@ export default function NavBar() {
 									Dashboard
 								</Link>
 							)}
-							<ThemeToggle />
-							<SignedOut>
-								<SignInButton mode="modal">
-									<button className={buttonClasses("primary", "md", "ml-2")}>
-										Sign In
-									</button>
-								</SignInButton>
-							</SignedOut>
+							<DisplaySettings />
 							<SignedIn>
 								<UserButton
 									afterSignOutUrl="/"
@@ -89,7 +86,7 @@ export default function NavBar() {
 
 					{/* Mobile menu button */}
 					<div className="md:hidden flex items-center gap-2">
-						<ThemeToggle />
+						<DisplaySettings />
 						<SignedIn>
 							<UserButton
 								afterSignOutUrl="/"
@@ -169,15 +166,6 @@ export default function NavBar() {
 								Dashboard
 							</Link>
 						)}
-						<SignedOut>
-							<div className="pt-2">
-								<SignInButton mode="modal">
-									<button className={buttonClasses("primary", "md", "w-full")}>
-										Sign In
-									</button>
-								</SignInButton>
-							</div>
-						</SignedOut>
 					</div>
 				</div>
 			)}

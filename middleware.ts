@@ -3,6 +3,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isPublicRoute = createRouteMatcher([
 	"/",
 	"/qr",
+	// Each event's own page - where flyer QR codes and shared links land.
+	// Must stay public or a resident scanning a flyer hits a sign-in wall.
+	"/events(.*)",
 	"/flyer(.*)",
 	"/api/flyer(.*)",
 	// Post-event feedback is intentionally login-free — see app/feedback

@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
 			],
 			metadata: { eventId },
 			success_url: `${origin}/pay/success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${origin}/#events`
+			// Back to the event they were paying for, not the top of a long list
+			cancel_url: `${origin}/events/${eventId}`
 		});
 
 		return NextResponse.json({ success: true, url: session.url });

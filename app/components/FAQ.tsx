@@ -12,19 +12,34 @@ interface FAQItem {
 
 const faqs: FAQItem[] = [
 	{
+		question: "Do I need an account?",
+		answer:
+			"No. Everything on this site works without one: seeing events, RSVPing, paying online, sharing ideas and sending us a message. Nothing to sign up for and no password to remember."
+	},
+	{
+		question: "How do I RSVP for an event?",
+		answer:
+			"Tap 'RSVP Now' on any event, type your name and tap how many people are coming. That's it. Add your email if you'd like a reminder the day before. Your phone remembers you, so next time it's even quicker."
+	},
+	{
+		question: "What if I can't make it after all?",
+		answer:
+			"On the same phone, open the event and tap 'You're going', then 'I can't make it'. You can change how many are coming the same way. Or just tell any committee member."
+	},
+	{
+		question: "The words are too small. Can I make them bigger?",
+		answer:
+			"Yes. Tap the 'Aa' button at the top of the screen and choose Large or Extra large. You can switch to dark colors there too. Your phone remembers the setting."
+	},
+	{
 		question: "When are committee meetings?",
 		answer:
 			"The Activities Committee meets on the first Monday of every month. Everyone is welcome to attend and share ideas for community events!"
 	},
 	{
-		question: "How do I RSVP for an event?",
-		answer:
-			"Simply click the 'RSVP Now' button on any event card. Fill in your info and you're all set! You can even add the event to your phone's calendar."
-	},
-	{
 		question: "How can I suggest an event?",
 		answer:
-			"Use the Contact Us form below to send us your event idea. We love hearing suggestions from the community!"
+			"Add it to the Ideas board on this page, where neighbors can vote for the ones they'd come to. You can also send us a message below. We love hearing suggestions from the community!"
 	},
 	{
 		question: "How do I join the Activities Committee?",

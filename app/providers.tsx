@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
+import { TextSizeProvider } from "./components/theme/TextSizeProvider";
 import { useClerkAppearance } from "./lib/clerkAppearance";
 
 function ClerkWithTheme({ children }: { children: React.ReactNode }) {
@@ -12,7 +13,9 @@ function ClerkWithTheme({ children }: { children: React.ReactNode }) {
 export function Providers({ children }: { children: React.ReactNode }) {
 	return (
 		<ThemeProvider>
-			<ClerkWithTheme>{children}</ClerkWithTheme>
+			<TextSizeProvider>
+				<ClerkWithTheme>{children}</ClerkWithTheme>
+			</TextSizeProvider>
 		</ThemeProvider>
 	);
 }

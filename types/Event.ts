@@ -22,9 +22,11 @@ export interface ConvexRsvp {
 	_creationTime: number;
 	eventId: Id<"events">;
 	name: string;
-	email: string;
+	email?: string;
 	phoneNumber?: string;
 	notes?: string;
+	partySize?: number; // absent = 1
+	visitorId?: string;
 	createdAt: number;
 }
 

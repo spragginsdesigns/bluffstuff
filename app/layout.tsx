@@ -2,6 +2,7 @@ import "./globals.css";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import UserSync from "./components/UserSync";
+import PreferencesSync from "./components/theme/PreferencesSync";
 import MobileTabBar from "./components/MobileTabBar";
 import { Metadata, Viewport } from "next";
 import { Fraunces, Atkinson_Hyperlegible } from "next/font/google";
@@ -23,8 +24,9 @@ const fontBody = Atkinson_Hyperlegible({
 	variable: "--font-body"
 });
 
-// Applies the saved (or system) theme before first paint to avoid a flash.
-const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("bs-theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}})()`;
+// Applies the saved (or system) theme and the saved text size before first
+// paint to avoid a flash. Keys match ThemeProvider / TextSizeProvider.
+const THEME_INIT_SCRIPT = `(function(){try{var d=document.documentElement,t=localStorage.getItem("bs-theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){d.classList.add("dark")}var s=localStorage.getItem("bs-text-size");if(s==="large"||s==="xlarge"){d.setAttribute("data-text-size",s)}}catch(e){}})()`;
 
 const SITE_DESCRIPTION =
 	"See what's happening at Woodward Bluffs Mobile Home Park — community events, potlucks, and get-togethers. RSVP in seconds, add events to your calendar, and share your ideas with the Activities Committee.";
@@ -113,6 +115,7 @@ export default function RootLayout({
 				<Providers>
 					<ConvexClientProvider>
 						<UserSync />
+						<PreferencesSync />
 						<header className="fixed w-full top-0 z-50 print:hidden">
 							<NavBar />
 						</header>

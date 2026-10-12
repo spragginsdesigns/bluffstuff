@@ -197,7 +197,7 @@ Before writing ANY new code: search for existing implementations first. Red flag
 ### Styling
 
 - Themed design tokens ONLY — never hardcode colors; use `bg-bg`/`bg-surface`/`text-ink`/`text-ink-muted`/`bg-primary`/`bg-accent` etc. (defined in `app/globals.css`, mapped in `tailwind.config.ts`)
-- Light + dark themes via `.dark` class on `<html>`; toggle in `app/components/theme/`
+- Light + dark themes via `.dark` class on `<html>`; switched from the "Aa" `DisplaySettings` panel in `app/components/theme/`
 - Accessible color contrast
 - Consistent spacing and typography scale
 - Reusable card components
@@ -246,7 +246,7 @@ Never assume changes work. After ANY change:
 
 ### UI & Styling
 - UI: Tailwind CSS + hand-rolled primitives in `app/components/ui/` (Button, Input, Textarea, Field, Modal, Section) + Framer Motion animations
-- **Theme system:** warm light mode (cream/terracotta/sage) is default; warm charcoal dark mode via `.dark` class. Tokens live in `app/globals.css` (CSS vars) → `tailwind.config.ts`. No-flash inline script in `layout.tsx`; `ThemeProvider`/`ThemeToggle` in `app/components/theme/`; Clerk follows theme via `app/lib/clerkAppearance.ts`
+- **Theme system:** warm light mode (cream/terracotta/sage) is default; warm charcoal dark mode via `.dark` class. Tokens live in `app/globals.css` (CSS vars) → `tailwind.config.ts`. No-flash inline script in `layout.tsx` (theme + text size); `ThemeProvider`/`TextSizeProvider`/`DisplaySettings`/`PreferencesSync` in `app/components/theme/`; Clerk follows theme via `app/lib/clerkAppearance.ts`
 - Fonts: Fraunces (display, `font-display`) + Atkinson Hyperlegible (body) via next/font — flyer keeps its own local Anton/Poppins
 - Modals: ALWAYS use `ui/Modal` (native `<dialog>` — focus containment, Escape, backdrop-click, single body-scroll-lock)
 - Navigation links: single source in `app/config/nav.ts` + `app/utils/scroll.ts` (NavBar, MobileTabBar, Footer all consume it)
@@ -255,15 +255,26 @@ Never assume changes work. After ANY change:
 - Big readable type (17px base) + WCAG AA contrast — audience includes older adults
 - Single-page layout with smooth scroll-to-section navigation
 
+### Residents: phone-first, never an account (Austin, 2026-10-11)
+~99% of residents are on Android/iPhone and most are older. **Nothing a resident does may require an account.** Accounts are for the committee; residents may *optionally* sign in to sync display settings. Design and verify every change at 375px first, with ≥44px tap targets, and check it at the Extra large text size.
+
+- **No resident-facing Sign In button.** The navbar has none (don't re-add one). Sign-in entry points: the footer's small "Committee sign-in" link and the optional line inside `DisplaySettings`.
+- **Event page `/events/[eventId]`** (`app/events/[eventId]/page.tsx` server + `EventDetail.tsx` client) is where flyer QRs, Share and the calendar go. It is public in `middleware.ts`; removing that line puts a sign-in wall in front of every flyer scan. Reads use `convexQuery()`; a bad id must render the friendly "not on the calendar" page, never a 500.
+- **`EventActions.tsx` is the one place event actions live** (RSVP / You're going / Who's Going / Pay / interest / calendar / flyer / Share). `EventCard` and `EventDetail` both render it; don't fork it.
+- **RSVP model:** name + `partySize` required; `email`, `phoneNumber` optional (no email = no reminder). `rsvps:create` upserts on `(eventId, visitorId)`, so resubmitting from the same phone amends. `rsvps:cancel` deletes only the caller's own visitor row, and `rsvps:myRsvp` only returns the caller's own. Counts (`getCountByEvent`, `countsByEvent`) are **headcounts**: `partySize ?? 1` summed. `rsvps:listForCommittee` (JWT, committee) is the only read that returns RSVP contact details to a browser.
+- **"Remember me"** is `app/hooks/useSavedContact.ts` (localStorage `bs-contact`), device-only and never sent until an RSVP is submitted.
+- **Display settings:** `theme/TextSizeProvider.tsx` (`bs-text-size`, `data-text-size` on `<html>`, CSS in `globals.css` scales the root font) next to `ThemeProvider` (`bs-theme`); both are applied pre-paint by the inline script in `layout.tsx`, so keep the keys in sync. `theme/PreferencesSync.tsx` mirrors them to `users.preferences` for signed-in people via `users:getMyPreferences/setMyPreferences`, which key **only** on the Clerk JWT email. On sign-in the account wins; an empty account adopts the device's settings.
+- `DisplaySettings` closes its own `<dialog>` before opening Clerk's sign-in modal. A native modal dialog makes everything outside it inert, which would freeze Clerk's modal.
+
 ### Routes & Middleware
-- Public routes: `/`, `/qr`, `/flyer/*`, `/api/flyer/*`, `/pay/*`, `/api/checkout`, `/sign-in`, `/sign-up` (see `middleware.ts`)
+- Public routes: `/`, `/qr`, `/events/*`, `/flyer/*`, `/api/flyer/*`, `/feedback/*`, `/pay/*`, `/api/checkout`, `/sign-in`, `/sign-up` (see `middleware.ts`)
 - All other routes require Clerk authentication
 - Home page uses anchor sections: `#events`, `#calendar`, `#committee`, `#resources`, `#faq`, `#contact`
 
 ### Event → Flyer Pipeline (see README for the full picture)
 One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with QR (`/api/flyer/[eventId]`), flyer page (`/flyer/[eventId]`), auto-email to `FLYER_RECIPIENT_EMAIL` (website-form creation only), and an AI poster from gpt-image-2.5-sunburst. Hard-won constraints - do not relearn these:
 
-- **Flyer = AI poster on top + code-drawn footer below. The footer is mandatory.** Top 1275×1200 is the Sunburst poster (or the code-drawn layout if none). Bottom 1275×450 is `HowToFooter` in `flyer.tsx`: QR (level Q, 4-module quiet zone) to `/#events`, three numbered steps, the typed URL, the benefits line. Most residents are older and new to QR codes, so never drop or shrink it, and never let the AI draw a QR (it won't scan). Keep all footer text dark so it survives black-and-white printing.
+- **Flyer = AI poster on top + code-drawn footer below. The footer is mandatory.** Top 1275×1200 is the Sunburst poster (or the code-drawn layout if none). Bottom 1275×450 is `HowToFooter` in `flyer.tsx`: QR (level Q, 4-module quiet zone) to **`/events/<id>`** (that event's page; Echo's `bluff_event.py` verify expects exactly this, so change both together), three numbered steps, the typed URL, the benefits line. Most residents are older and new to QR codes, so never drop or shrink it, and never let the AI draw a QR (it won't scan). Keep all footer text dark so it survives black-and-white printing.
 - **Posters are proofread before saving** (`app/utils/flyerPoster.ts`): gpt-5.4-mini compares the painted text to `posterLines(event)`; 2 attempts max, then nothing is saved and the route returns 502. Don't loosen this, since a typo'd flyer gets printed and posted.
 - **JPEG = poster, PNG = legacy background art.** `flyer.tsx` picks the layout from the stored file's `Content-Type`. Posters must be uploaded as `image/jpeg` or they render as a faded background behind the code layout.
 - **Changing an event's text clears its poster.** `/api/events` update sets `imageUrl: ""` when title, description, date, time, location or price change, because the old details are painted into the image. Agents editing via Convex directly must do the same, then call `/api/generateFlyerArt` again.
@@ -333,6 +344,13 @@ Three anonymous, login-free signals that exist to answer "why did nobody come?".
 | Purpose | Path |
 |---------|------|
 | Main entry / Home | `app/page.tsx` |
+| Event page (QR / share target) | `app/events/[eventId]/page.tsx` + `EventDetail.tsx` |
+| Shared event actions (RSVP, pay, share…) | `app/components/EventActions.tsx` |
+| RSVP form (headcount, optional email, cancel) | `app/components/RsvpModal.tsx` |
+| Remembered RSVP contact (device only) | `app/hooks/useSavedContact.ts` |
+| Display settings (text size, theme, sync) | `app/components/theme/` |
+| Committee guest list | `app/components/CommitteeGuestList.tsx` |
+| Park-time "today" helper | `app/utils/parkDate.ts` |
 | Root layout | `app/layout.tsx` |
 | Auth middleware | `middleware.ts` |
 | Convex schema | `convex/schema.ts` |
@@ -372,9 +390,9 @@ Three anonymous, login-free signals that exist to answer "why did nobody come?".
 
 | Table | Purpose | Key Indexes |
 |-------|---------|-------------|
-| `users` | Clerk-synced user records with roles | `by_email` |
+| `users` | Clerk-synced user records with roles + synced display `preferences` | `by_email` |
 | `events` | Community events (CRUD by committee) | `by_date`, `by_active` |
-| `rsvps` | Event attendance registrations | `by_event`, `by_email` |
+| `rsvps` | Event attendance registrations (headcount, optional email) | `by_event`, `by_email`, `by_event_visitor` |
 | `payments` | Online Stripe payments (door-pass records) | `by_event`, `by_session` |
 | `contactMessages` | Contact form submissions | — |
 | `eventFeedback` | Anonymous post-event feedback (attended / why not) | `by_event`, `by_event_visitor` |

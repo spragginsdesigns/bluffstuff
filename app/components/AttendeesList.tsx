@@ -18,6 +18,8 @@ export default function AttendeesList({
 	onClose
 }: AttendeesListProps) {
 	const attendees = useQuery(api.rsvps.getByEvent, { eventId });
+	const headcount =
+		attendees?.reduce((sum, attendee) => sum + attendee.partySize, 0) ?? 0;
 
 	return (
 		<Modal title={`Who's Going to ${eventTitle}`} onClose={onClose}>
@@ -50,9 +52,8 @@ export default function AttendeesList({
 				</div>
 			) : (
 				<>
-					<p className="text-sm text-ink-muted mb-4">
-						{attendees.length} {attendees.length === 1 ? "person" : "people"}{" "}
-						going
+					<p className="text-base text-ink-muted mb-4">
+						{headcount} {headcount === 1 ? "person" : "people"} going
 					</p>
 					<ul className="space-y-2">
 						{attendees.map((attendee, index) => (
@@ -66,7 +67,11 @@ export default function AttendeesList({
 								<div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-fg font-medium text-sm flex-shrink-0">
 									{attendee.name.charAt(0).toUpperCase()}
 								</div>
-								<span className="text-ink">{attendee.name}</span>
+								<span className="text-ink">
+									{attendee.partySize > 1
+										? `${attendee.name} (+${attendee.partySize - 1})`
+										: attendee.name}
+								</span>
 							</motion.li>
 						))}
 					</ul>

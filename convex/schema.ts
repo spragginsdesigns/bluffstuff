@@ -7,6 +7,20 @@ export default defineSchema({
 		name: v.string(),
 		imageUrl: v.optional(v.string()),
 		role: v.string(), // "committee" or "resident"
+		// Display settings that follow a signed-in person across devices.
+		// Signed-out residents keep the same settings in localStorage only.
+		preferences: v.optional(
+			v.object({
+				theme: v.optional(v.union(v.literal("light"), v.literal("dark"))),
+				textSize: v.optional(
+					v.union(
+						v.literal("normal"),
+						v.literal("large"),
+						v.literal("xlarge")
+					)
+				)
+			})
+		),
 		createdAt: v.number(),
 		lastLoginAt: v.number()
 	}).index("by_email", ["email"]),
@@ -38,13 +52,21 @@ export default defineSchema({
 	rsvps: defineTable({
 		eventId: v.id("events"),
 		name: v.string(),
-		email: v.string(),
+		// Optional so a resident can RSVP with just a name. Without one they
+		// simply get no day-before reminder email.
+		email: v.optional(v.string()),
 		phoneNumber: v.optional(v.string()),
 		notes: v.optional(v.string()),
+		// Headcount for this RSVP, the resident included. Absent = 1.
+		partySize: v.optional(v.number()),
+		// Browser-local id (useVisitorId) so the same phone can see, change or
+		// cancel its own RSVP without an account. Absent on older rows.
+		visitorId: v.optional(v.string()),
 		createdAt: v.number()
 	})
 		.index("by_event", ["eventId"])
-		.index("by_email", ["email"]),
+		.index("by_email", ["email"])
+		.index("by_event_visitor", ["eventId", "visitorId"]),
 
 	payments: defineTable({
 		eventId: v.id("events"),
@@ -60,7 +82,8 @@ export default defineSchema({
 
 	contactMessages: defineTable({
 		name: v.string(),
-		email: v.string(),
+		// Email OR phone - at least one, enforced in contactMessages:submit.
+		email: v.optional(v.string()),
 		phone: v.optional(v.string()),
 		subject: v.string(),
 		message: v.string(),

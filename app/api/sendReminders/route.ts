@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { convexQuery } from "@/app/utils/convexServer";
 import { SITE_URL, mailFrom, mailSenderAddress } from "@/app/config/site";
+import { PARK_TIMEZONE, localDateIn } from "@/app/utils/parkDate";
 
 /**
  * Day-before event reminders, run by Vercel Cron (see vercel.json).
@@ -21,25 +22,6 @@ import { SITE_URL, mailFrom, mailSenderAddress } from "@/app/config/site";
  *  - Marks per-event, after that event's sends. A crash halfway through
  *    retries that whole event next run instead of skipping it silently.
  */
-
-// The park is in Fresno; cron fires in UTC, so "tomorrow" has to be resolved
-// in local time or reminders land a day early or late around midnight.
-const PARK_TIMEZONE = "America/Los_Angeles";
-
-function localDateIn(timeZone: string, offsetDays = 0): string {
-	const now = new Date();
-	const local = new Intl.DateTimeFormat("en-CA", {
-		timeZone,
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit"
-	}).format(now);
-	const [y, m, d] = local.split("-").map(Number);
-	// Build in UTC so the arithmetic can't be shifted by the server's own zone
-	const shifted = new Date(Date.UTC(y, m - 1, d));
-	shifted.setUTCDate(shifted.getUTCDate() + offsetDays);
-	return shifted.toISOString().split("T")[0];
-}
 
 interface DueEvent {
 	_id: Id<"events">;

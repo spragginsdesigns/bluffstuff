@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import EventCard from "./components/EventCard";
@@ -26,6 +27,7 @@ export default function Home() {
 	const isLoading = upcomingEventsRaw === undefined;
 	const upcomingEvents = upcomingEventsRaw ?? [];
 	const [showAllEvents, setShowAllEvents] = useState(false);
+	const router = useRouter();
 
 	// The home page no longer waits on Clerk. It used to block rendering until
 	// auth loaded so the committee dashboard wouldn't flash in; the dashboard
@@ -144,9 +146,7 @@ export default function Home() {
 						</p>
 						<MonthlyCalendar
 							events={upcomingEvents as ConvexEvent[]}
-							onEventClick={() => {
-								scrollToSection("events");
-							}}
+							onEventClick={(event) => router.push(`/events/${event._id}`)}
 						/>
 					</div>
 				</section>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Doc } from "@/convex/_generated/dataModel";
 import { ConvexEvent } from "@/types/Event";
 import EventFormModal from "./EventFormModal";
+import CommitteeGuestList from "./CommitteeGuestList";
 import Button from "./ui/Button";
 import ConfirmButton from "./ui/ConfirmButton";
 
@@ -26,6 +27,9 @@ export default function CommitteeEventsTab({
 	const [showAllFilteredEvents, setShowAllFilteredEvents] = useState(false);
 
 	const [deleteError, setDeleteError] = useState<string | null>(null);
+	const [guestListEvent, setGuestListEvent] = useState<Doc<"events"> | null>(
+		null
+	);
 
 	const handleArchive = async (eventId: ConvexEvent["_id"]) => {
 		await fetch("/api/events", {
@@ -182,7 +186,13 @@ export default function CommitteeEventsTab({
 												at {event.time} &middot; {event.location}
 											</p>
 										</div>
-										<div className="flex gap-2 flex-shrink-0">
+										<div className="flex flex-wrap gap-2 flex-shrink-0">
+											<button
+												onClick={() => setGuestListEvent(event)}
+												className="px-3 py-1.5 rounded-lg text-sm text-ink-muted bg-surface hover:bg-surface-2 border border-border transition-colors"
+											>
+												Guests
+											</button>
 											<a
 												href={`/flyer/${event._id}`}
 												target="_blank"
@@ -253,6 +263,14 @@ export default function CommitteeEventsTab({
 						</>
 					)}
 				</div>
+			)}
+
+			{guestListEvent && (
+				<CommitteeGuestList
+					eventId={guestListEvent._id}
+					eventTitle={guestListEvent.title}
+					onClose={() => setGuestListEvent(null)}
+				/>
 			)}
 
 			{showEventForm && (

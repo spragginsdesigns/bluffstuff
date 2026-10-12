@@ -32,16 +32,28 @@ export default function ContactForm() {
 	const [status, setStatus] = useState<
 		"idle" | "submitting" | "success" | "error"
 	>("idle");
+	const [errorMessage, setErrorMessage] = useState("");
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+
+		// Email or phone, either one - many residents would rather be called
+		if (!formData.email.trim() && !formData.phone.trim()) {
+			setStatus("error");
+			setErrorMessage(
+				"Please leave an email or a phone number so we can get back to you."
+			);
+			return;
+		}
+
 		setStatus("submitting");
+		setErrorMessage("");
 
 		try {
 			await submitMessage({
 				name: formData.name,
-				email: formData.email,
-				phone: formData.phone || undefined,
+				email: formData.email.trim() || undefined,
+				phone: formData.phone.trim() || undefined,
 				subject: formData.subject,
 				message: formData.message
 			});
@@ -49,6 +61,7 @@ export default function ContactForm() {
 			setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
 		} catch {
 			setStatus("error");
+			setErrorMessage("Something went wrong. Please try again.");
 		}
 	};
 
@@ -127,30 +140,6 @@ export default function ContactForm() {
 											onChange={handleChange}
 										/>
 									</Field>
-									<Field label="Email" htmlFor="email" required>
-										<Input
-											type="email"
-											id="email"
-											name="email"
-											required
-											placeholder="you@example.com"
-											value={formData.email}
-											onChange={handleChange}
-										/>
-									</Field>
-								</div>
-
-								<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-									<Field label="Phone (optional)" htmlFor="phone">
-										<Input
-											type="tel"
-											id="phone"
-											name="phone"
-											placeholder="(555) 123-4567"
-											value={formData.phone}
-											onChange={handleChange}
-										/>
-									</Field>
 									<Field label="Subject" htmlFor="subject" required>
 										<select
 											id="subject"
@@ -173,6 +162,39 @@ export default function ContactForm() {
 									</Field>
 								</div>
 
+								<div>
+									<p className="text-base font-medium text-ink mb-1">
+										How can we reach you?
+									</p>
+									<p className="text-sm text-ink-muted mb-3">
+										Leave an email, a phone number, or both.
+									</p>
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+										<Field label="Email" htmlFor="email">
+											<Input
+												type="email"
+												id="email"
+												name="email"
+												autoComplete="email"
+												placeholder="you@example.com"
+												value={formData.email}
+												onChange={handleChange}
+											/>
+										</Field>
+										<Field label="Phone" htmlFor="phone">
+											<Input
+												type="tel"
+												id="phone"
+												name="phone"
+												autoComplete="tel"
+												placeholder="(559) 123-4567"
+												value={formData.phone}
+												onChange={handleChange}
+											/>
+										</Field>
+									</div>
+								</div>
+
 								<Field label="Message" htmlFor="message" required>
 									<Textarea
 										id="message"
@@ -191,7 +213,7 @@ export default function ContactForm() {
 										animate={{ opacity: 1, y: 0 }}
 										className="p-3 rounded-xl bg-danger-soft text-danger text-sm"
 									>
-										Something went wrong. Please try again.
+										{errorMessage}
 									</motion.div>
 								)}
 

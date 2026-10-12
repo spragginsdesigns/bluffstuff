@@ -8,6 +8,7 @@ import { ConvexEvent } from "@/types/Event";
 import RsvpModal from "./RsvpModal";
 import Button from "./ui/Button";
 import { scrollToSection } from "../utils/scroll";
+import { useVisitorId } from "../hooks/useVisitorId";
 
 interface HeroProps {
 	nextEvent: ConvexEvent | null;
@@ -102,6 +103,11 @@ export default function Hero({ nextEvent, isLoading = false }: HeroProps) {
 	const rsvpCount = useQuery(
 		api.rsvps.getCountByEvent,
 		nextEvent ? { eventId: nextEvent._id } : "skip"
+	);
+	const visitorId = useVisitorId();
+	const myRsvp = useQuery(
+		api.rsvps.myRsvp,
+		nextEvent && visitorId ? { eventId: nextEvent._id, visitorId } : "skip"
 	);
 
 	const eventDate = nextEvent ? new Date(nextEvent.date + "T00:00:00") : null;
@@ -305,7 +311,11 @@ export default function Hero({ nextEvent, isLoading = false }: HeroProps) {
 											onClick={() => setIsRsvpOpen(true)}
 											className="flex-1"
 										>
-											RSVP Now
+											{myRsvp
+												? myRsvp.partySize > 1
+													? `✓ You're going (${myRsvp.partySize})`
+													: "✓ You're going"
+												: "RSVP Now"}
 										</Button>
 										<Button
 											variant="outline"
@@ -358,6 +368,8 @@ export default function Hero({ nextEvent, isLoading = false }: HeroProps) {
 					eventDate={nextEvent.date}
 					eventTime={nextEvent.time}
 					eventLocation={nextEvent.location}
+					visitorId={visitorId}
+					existing={myRsvp ?? null}
 					onClose={() => setIsRsvpOpen(false)}
 				/>
 			)}

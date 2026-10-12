@@ -74,6 +74,15 @@
 	}
 }
 
+/* Resident-chosen text size (DisplaySettings). Tailwind sizes in rem, so
+   raising the root font size scales the whole page, spacing included. */
+html[data-text-size="large"] {
+	font-size: 112.5%;
+}
+html[data-text-size="xlarge"] {
+	font-size: 125%;
+}
+
 body {
 	@apply bg-bg text-ink;
 	font-size: 1.0625rem; /* 17px base — readability for older residents */

@@ -102,14 +102,16 @@ export default function CommitteeMessagesTab({
 										/>
 									)}
 									<span className="text-ink font-medium">{msg.name}</span>
-									<a
-										href={`mailto:${msg.email}?subject=${encodeURIComponent(
-											`Re: ${msg.subject}`
-										)}`}
-										className="text-ink-faint text-sm hover:text-primary-strong transition-colors"
-									>
-										{msg.email}
-									</a>
+									{msg.email && (
+										<a
+											href={`mailto:${msg.email}?subject=${encodeURIComponent(
+												`Re: ${msg.subject}`
+											)}`}
+											className="text-ink-faint text-sm hover:text-primary-strong transition-colors"
+										>
+											{msg.email}
+										</a>
+									)}
 									{msg.phone && (
 										<a
 											href={`tel:${msg.phone}`}
@@ -136,14 +138,26 @@ export default function CommitteeMessagesTab({
 							<p className="text-ink-muted text-sm">{msg.message}</p>
 
 							<div className="flex flex-wrap gap-2 mt-3">
-								<a
-									href={`mailto:${msg.email}?subject=${encodeURIComponent(
-										`Re: ${msg.subject}`
-									)}`}
-									className="px-3 py-1.5 rounded-lg text-sm text-primary-strong bg-primary-soft hover:bg-primary-soft/70 transition-colors"
-								>
-									Reply
-								</a>
+								{/* Email is optional now - residents may leave only a phone */}
+								{msg.email ? (
+									<a
+										href={`mailto:${msg.email}?subject=${encodeURIComponent(
+											`Re: ${msg.subject}`
+										)}`}
+										className="px-3 py-1.5 rounded-lg text-sm text-primary-strong bg-primary-soft hover:bg-primary-soft/70 transition-colors"
+									>
+										Reply
+									</a>
+								) : (
+									msg.phone && (
+										<a
+											href={`tel:${msg.phone}`}
+											className="px-3 py-1.5 rounded-lg text-sm text-primary-strong bg-primary-soft hover:bg-primary-soft/70 transition-colors"
+										>
+											Call back
+										</a>
+									)
+								)}
 								<button
 									onClick={() => handleToggleRead(msg)}
 									disabled={pendingId === msg._id}

@@ -5,14 +5,24 @@ import { requireCommittee } from "./committeeAuth";
 export const submit = mutation({
 	args: {
 		name: v.string(),
-		email: v.string(),
+		email: v.optional(v.string()),
 		phone: v.optional(v.string()),
 		subject: v.string(),
 		message: v.string()
 	},
 	handler: async (ctx, args) => {
+		// Plenty of residents would rather leave a phone number than an email.
+		// Either is fine, but the committee needs some way to reply.
+		const email = args.email?.trim() || undefined;
+		const phone = args.phone?.trim() || undefined;
+		if (!email && !phone) {
+			throw new Error("Please leave an email or a phone number so we can reply");
+		}
+
 		return await ctx.db.insert("contactMessages", {
 			...args,
+			email,
+			phone,
 			createdAt: Date.now()
 		});
 	}

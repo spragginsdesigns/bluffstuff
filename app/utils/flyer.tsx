@@ -19,6 +19,7 @@ const FOOTER_GREEN = "#1b5e3e";
 const FOOTER_RED = "#b3261e";
 
 export interface FlyerEventData {
+	_id: string; // the QR opens /events/<_id>
 	title: string;
 	description: string;
 	date: string; // YYYY-MM-DD
@@ -350,9 +351,15 @@ function Step({ n, children }: { n: string; children: string }) {
  * steps for residents who have never scanned one, the typed address as a
  * fallback, and why the site is worth visiting. Never AI-drawn - an
  * AI-rendered QR does not scan.
+ *
+ * The QR opens this event's own page, so a scan lands one tap from RSVP
+ * instead of at the top of a list. Echo's bluff_event.py verify decodes the
+ * QR and expects exactly this URL - change both together.
  */
-function HowToFooter() {
-	const { d: qrPath, moduleCount } = buildQrPath(`${SITE_URL}/#events`);
+function HowToFooter({ eventId }: { eventId: string }) {
+	const { d: qrPath, moduleCount } = buildQrPath(
+		`${SITE_URL}/events/${eventId}`
+	);
 	// 4-module quiet zone around the code, as the QR spec requires
 	const quiet = 4;
 	const span = moduleCount + quiet * 2;
@@ -391,7 +398,7 @@ function HowToFooter() {
 						color: INK
 					}}
 				>
-					SEE EVENTS &amp; RSVP
+					RSVP FOR THIS EVENT
 				</div>
 				<Step n="1">{"Open your phone's camera."}</Step>
 				<Step n="2">Point it at the black square.</Step>
@@ -429,7 +436,7 @@ function HowToFooter() {
 						marginTop: 6
 					}}
 				>
-					Free. No account needed. RSVP, pay online, get a reminder.
+					No account needed. RSVP, pay online, get a reminder.
 				</div>
 			</div>
 		</div>
@@ -503,7 +510,7 @@ export async function generateFlyerImage(
 				) : (
 					<GeneratedTop event={event} artData={artData} />
 				)}
-				<HowToFooter />
+				<HowToFooter eventId={event._id} />
 			</div>
 		),
 		{

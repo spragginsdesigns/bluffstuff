@@ -32,17 +32,18 @@ export const dueForReminder = query({
 					.withIndex("by_event", (q) => q.eq("eventId", event._id))
 					.collect();
 
-				// De-dupe by email — one person, one reminder, even if they
-				// managed to RSVP twice under different names.
+				// De-dupe by email - one person, one reminder, even if they
+				// managed to RSVP twice under different names. Email is optional
+				// on an RSVP; residents who left it blank get no reminder.
 				const seen = new Set<string>();
-				const recipients = rsvps
-					.filter((r) => {
-						const key = r.email.trim().toLowerCase();
-						if (!key || seen.has(key)) return false;
-						seen.add(key);
-						return true;
-					})
-					.map((r) => ({ name: r.name, email: r.email.trim() }));
+				const recipients: { name: string; email: string }[] = [];
+				for (const r of rsvps) {
+					const email = r.email?.trim();
+					const key = email?.toLowerCase();
+					if (!email || !key || seen.has(key)) continue;
+					seen.add(key);
+					recipients.push({ name: r.name, email });
+				}
 
 				return {
 					_id: event._id,
