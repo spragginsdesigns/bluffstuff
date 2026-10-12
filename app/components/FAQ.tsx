@@ -14,7 +14,7 @@ const faqs: FAQItem[] = [
 	{
 		question: "Do I need an account?",
 		answer:
-			"No. Everything on this site works without one: seeing events, RSVPing, paying online, sharing ideas and sending us a message. Nothing to sign up for and no password to remember."
+			"No. Everything on this site works without one: seeing events, RSVPing, paying online, sharing ideas and sending us a message. Signing in is optional: it only keeps your text size and colors the same on every device you use."
 	},
 	{
 		question: "How do I RSVP for an event?",

@@ -2,12 +2,21 @@
 
 What changed on bluffstuff.vercel.app, newest first. Earlier history is in `git log`.
 
+## 2026-10-12: Sign In is back in the navbar
+
+The previous release went too far and took Sign In off the navbar, leaving only a footer link labeled "Committee sign-in". Accounts are meant for everyone and required for no one, so:
+- The navbar has a Sign In button again (desktop bar and the phone menu). It's outlined rather than orange, so it reads as optional.
+- The footer "Committee sign-in" link is gone, so sign-in is no longer presented as committee-only.
+- The FAQ's "Do I need an account?" now says signing in is optional and what it's for (keeping your text size and colors on every device).
+
+Nothing changed for existing accounts. The committee dashboard, Austin's admin access and all sign-ins work exactly as before.
+
 ## 2026-10-11: Residents never need an account
 
 Almost every resident uses the site on a phone, and most are older. This release removes every nudge toward an account and makes RSVPing and finding an event take as few taps as possible.
 
 **For residents**
-- The navbar no longer has a Sign In button. Everything works without an account. The committee signs in from a small footer link.
+- The navbar no longer has a Sign In button. Everything works without an account. The committee signs in from a small footer link. (Reversed on 2026-10-12, above.)
 - Every event has its own page (`/events/<id>`): big text, all the details, and one RSVP button. Flyer QR codes now open the event itself instead of the list, and texting the link shows the flyer as a preview.
 - RSVP asks for a name and how many are coming (1-6 big buttons). Email and phone are optional; an email still gets the reminder the day before.
 - The phone remembers you: next time your name is already filled in, the event shows "You're going (2)", and you can change the headcount or tap "I can't make it" from the same phone.

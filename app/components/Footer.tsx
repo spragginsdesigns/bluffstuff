@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { SignedOut } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "../config/nav";
 import { scrollToSection } from "../utils/scroll";
@@ -63,16 +61,6 @@ export default function Footer() {
 						&copy; {new Date().getFullYear()} Bluff Stuff &middot; Woodward
 						Bluffs Activities Committee
 					</p>
-					{/* The only sign-in entry point on the site. Residents never need
-					    one, so it stays small and out of the way. */}
-					<SignedOut>
-						<Link
-							href="/sign-in"
-							className="inline-block mt-3 underline underline-offset-2 hover:text-ink transition-colors"
-						>
-							Committee sign-in
-						</Link>
-					</SignedOut>
 				</div>
 			</div>
 		</footer>
