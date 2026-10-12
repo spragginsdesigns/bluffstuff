@@ -20,7 +20,18 @@ export async function GET(
 			return NextResponse.json({ error: "Event not found." }, { status: 404 });
 		}
 
-		return await generateFlyerImage(event);
+		const image = await generateFlyerImage(event);
+
+		// next/og defaults to `public, immutable, max-age=31536000`, which kept
+		// phones, the CDN and link previews showing the old flyer for a year
+		// after an event was edited. The URL never changes, so cache briefly:
+		// the CDN serves it for 5 minutes, then revalidates in the background.
+		const headers = new Headers(image.headers);
+		headers.set(
+			"Cache-Control",
+			"public, max-age=0, s-maxage=300, stale-while-revalidate=86400"
+		);
+		return new Response(image.body, { status: image.status, headers });
 	} catch (error) {
 		console.error("Error generating flyer image:", error);
 		return NextResponse.json(

@@ -260,8 +260,12 @@ Never assume changes work. After ANY change:
 
 - **Support both: signed in and signed out (Austin, 2026-10-12).** The navbar keeps a Sign In button for everyone (desktop bar + phone menu), styled `outline` so it reads as optional, not as a first step. Never remove it and never label sign-in "committee only": residents may create accounts too, it's just never required. `DisplaySettings` also has an optional sign-in line.
 - **Event page `/events/[eventId]`** (`app/events/[eventId]/page.tsx` server + `EventDetail.tsx` client) is where flyer QRs, Share and the calendar go. It is public in `middleware.ts`; removing that line puts a sign-in wall in front of every flyer scan. Reads use `convexQuery()`; a bad id must render the friendly "not on the calendar" page, never a 500.
-- **`EventActions.tsx` is the one place event actions live** (RSVP / You're going / Who's Going / Pay / interest / calendar / flyer / Share). `EventCard` and `EventDetail` both render it; don't fork it.
-- **RSVP model:** name + `partySize` required; `email`, `phoneNumber` optional (no email = no reminder). `rsvps:create` upserts on `(eventId, visitorId)`, so resubmitting from the same phone amends. `rsvps:cancel` deletes only the caller's own visitor row, and `rsvps:myRsvp` only returns the caller's own. Counts (`getCountByEvent`, `countsByEvent`) are **headcounts**: `partySize ?? 1` summed. `rsvps:listForCommittee` (JWT, committee) is the only read that returns RSVP contact details to a browser.
+- **`EventActions.tsx` is the one place event actions live** (RSVP / You're going / Who's Going / Pay / interest / calendar / Share). `EventCard` and `EventDetail` both render it; don't fork it. Home cards pass `compact` (RSVP + Pay only, plus a "See details" button): older residents freeze when a card has nine buttons, so everything else lives on the event page. The event page shows the flyer image itself; there's no "Flyer" chip for residents.
+- **Dates shown to residents go through `app/utils/parkDate.ts`** (`friendlyWhen` → "Today at 6:00 PM" / "Tomorrow at…" / "Saturday, October 18 at…"; `longWhen` for anything cached or read later, like link previews and share text). Today's events drop off the home page 3 hours after their start time (`hasEventEnded`); unparseable times stay visible.
+- **One "Add to my calendar" button**: Apple devices get the .ics file, everything else Google Calendar, with a "Use a different calendar" link for the other.
+- **RSVP model:** name + `partySize` required; `email`, `phoneNumber` optional (no email = no reminder). `rsvps:create` upserts on `(eventId, visitorId)`, so resubmitting from the same phone amends. If this browser has no row but the **same email** (case-insensitive) is already on the event, it amends that row and moves its `visitorId` to this browser instead of refusing: the reminder email opens in Gmail's in-app browser, which has its own localStorage and so a different visitor id, and refusing there was a dead end.
+- **Resident-facing mutation errors must be `ConvexError("plain sentence")`**, never `new Error(...)`. Production Convex hides plain Error text, so residents saw "[CONVEX M(rsvps:create)] [Request ID…] Server Error". Show caught errors with `friendlyError(err)` from `app/utils/friendlyError.ts`, which returns the ConvexError text or a calm fallback, never raw internals.
+- **Bad links never crash.** `events:getById` takes `v.string()` and `normalizeId`s it, returning null for a malformed id; pages show `components/EventGone.tsx` ("This event isn't on the calendar anymore"). `app/error.tsx` and `app/not-found.tsx` are friendly fallbacks with a way back to `/#events`. `rsvps:cancel` deletes only the caller's own visitor row, and `rsvps:myRsvp` only returns the caller's own. Counts (`getCountByEvent`, `countsByEvent`) are **headcounts**: `partySize ?? 1` summed. `rsvps:listForCommittee` (JWT, committee) is the only read that returns RSVP contact details to a browser.
 - **"Remember me"** is `app/hooks/useSavedContact.ts` (localStorage `bs-contact`), device-only and never sent until an RSVP is submitted.
 - **Display settings:** `theme/TextSizeProvider.tsx` (`bs-text-size`, `data-text-size` on `<html>`, CSS in `globals.css` scales the root font) next to `ThemeProvider` (`bs-theme`); both are applied pre-paint by the inline script in `layout.tsx`, so keep the keys in sync. `theme/PreferencesSync.tsx` mirrors them to `users.preferences` for signed-in people via `users:getMyPreferences/setMyPreferences`, which key **only** on the Clerk JWT email. On sign-in the account wins; an empty account adopts the device's settings.
 - `DisplaySettings` closes its own `<dialog>` before opening Clerk's sign-in modal. A native modal dialog makes everything outside it inert, which would freeze Clerk's modal.
@@ -280,6 +284,7 @@ One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with Q
 - **Changing an event's text clears its poster.** `/api/events` update sets `imageUrl: ""` when title, description, date, time, location or price change, because the old details are painted into the image. Agents editing via Convex directly must do the same, then call `/api/generateFlyerArt` again.
 - **`/api/generateFlyerArt` is public in middleware.** It authenticates itself: a Clerk committee session, or `x-committee-secret` plus a committee `requesterEmail` (Echo). `emailPrinter: true` emails the flyer after the design, and emails the code-drawn flyer if the design failed.
 
+- **The flyer PNG is cached for minutes, not forever.** next/og defaults to `public, immutable, max-age=31536000`, which kept phones, the CDN and link previews on the old flyer after an edit. `/api/flyer/[eventId]` overrides it to `public, max-age=0, s-maxage=300, stale-while-revalidate=86400`, and `flyerEmail.ts` adds `?v=<timestamp>` so the printer always gets the current one.
 - **Flyer PNG must render on the edge runtime.** `next/og` ImageResponse in the Node runtime breaks on Windows dev (font-path `ERR_INVALID_URL`). Node routes needing the PNG (e.g. sendFlyer) fetch `/api/flyer/[id]` from their own origin with `cache: "no-store"`.
 - **Satori rules** (`app/utils/flyer.tsx`): text nodes must be a single string (template literals, never `{a} · {b}`); component libraries don't render (react-qr-code silently collapses) — the QR is a raw `<svg><path/>` built with `qrcode-generator`; remote images are silently dropped — fetch them yourself and pass the raw ArrayBuffer as `img src`.
 - **Server-side Convex READS must use `convexQuery()`** from `app/utils/convexServer.ts` — Next 14 caches `fetch()` in route handlers and ConvexHttpClient rides on fetch, so direct queries return stale documents. Mutations stay on ConvexHttpClient.
@@ -297,6 +302,7 @@ Priced events (`events.priceCents`, dollars in the form → cents in the DB) get
 - **Amount is read server-side.** `/api/checkout` looks up `event.priceCents` from Convex — never trusts a client-supplied price.
 - **The success page IS the proof.** It re-fetches the session from Stripe with the secret key and only shows "You're paid!" for a verified-paid session (accepts `paid` AND `no_payment_required` for $0 promos). That's why the screen/email is trustworthy at the door.
 - **Recording + email are idempotent.** `payments:record` keys on the Stripe session id and returns `{ id, alreadyRecorded }`; the receipt email fires only when `alreadyRecorded` is false, so refreshes don't duplicate.
+- **The price is per person, so quantity is adjustable (1-6).** `/api/checkout` sets `adjustable_quantity` on the single line item. `/pay/success` retrieves the session with `expand: ["line_items"]`, shows "Paid for: N people" on the door pass, stores it in `payments.quantity` (optional; absent on older rows = 1) and puts it in the receipt, which also links to the event page.
 - **Receipt email reuses the flyer Gmail transport** (`GMAIL_USER`/`GMAIL_APP_PASSWORD`) — no separate provider. Template `app/utils/receiptEmail.ts` is table-based + inline-styles only (Gmail/Yahoo strip modern CSS).
 - **`buttonClasses` must be imported from `app/components/ui/buttonStyles.ts`** (a plain module) in server components like `/pay/success` — importing it from the `"use client"` `Button.tsx` makes it a client reference and crashes the server render.
 - **Convex deploys are still manual** — `payments.ts` lives in `convex/`, so `npx convex dev --once` + `npx convex deploy` after edits.
@@ -306,6 +312,7 @@ Three anonymous, login-free signals that exist to answer "why did nobody come?".
 
 - **No sign-in, on purpose.** The responses worth having come from people who did NOT attend, and they will not create an account to explain why. `/feedback/*` is a public route in `middleware.ts`. Do not put any of these behind Clerk.
 - **`visitorId` never leaves the server.** A random localStorage id (`app/hooks/useVisitorId.ts`) dedupes taps and votes. Public queries must return explicit field lists — `ideas:list` builds its payload field by field precisely so the submitter's `visitorId` can't leak and de-anonymize the board.
+- **The feedback page only asks after the event.** If `event.date` is today or later in park time, it shows "This event hasn't happened yet" with a button to the event page instead of the form.
 - **The feedback form leads with "Did you make it?"** The *No* branch (checkbox reasons) is the substantial one; the attendee rating is secondary. Reason keys live in `convex/feedbackOptions.ts` and are shared by the form, the Convex validator, and the dashboard tally — change a `label` freely, never repurpose a `key`.
 - **Feedback is coherent server-side**: `feedback:submit` drops a rating for no-shows and reasons for attendees regardless of what the client sends, and upserts on `(eventId, visitorId)` so resubmitting amends rather than duplicates.
 - **Attendance headcount is the point of the dashboard tab.** Without it, "nobody was interested" and "everyone RSVP'd then stayed home" are indistinguishable. Written via `events:setAttendance` — secret-gated like the other event mutations, through `/api/events` with `action: "attendance"`.
@@ -321,14 +328,16 @@ Three anonymous, login-free signals that exist to answer "why did nobody come?".
 - **`MAIL_FROM_ADDRESS` is optional and does nothing on its own.** Gmail rewrites `From:` back to the authenticated account unless the address is a verified *Send mail as* alias on that Gmail account. Add the alias first, then set the variable. Setup steps are in the README.
 - Gmail's practical ceiling is ~500 recipients/day. Fine at current RSVP volume; the reminder cron is the path that would hit it first if the park's list grows.
 
-### Event Reminders (cron)
-`/api/sendReminders` emails everyone who RSVP'd the day before an event. It replaced a stub that took `{email, message}` and was called by nothing — which is why residents were never reminded.
+### Event Reminders + Thank-yous (cron)
+`/api/sendReminders` runs once a day and sends two emails to everyone who RSVP'd with an email: a **reminder** for tomorrow's events and a **thank-you** for yesterday's. It replaced a stub that took `{email, message}` and was called by nothing - which is why residents were never reminded.
 
 - **Scheduled by Vercel Cron** (`vercel.json`, `0 16 * * *` = 9am Pacific). No VPS or external scheduler; it runs next to the Gmail transport it needs.
-- **`CRON_SECRET` bearer token is the authentication.** The route is public in `middleware.ts` because a cron has no Clerk session, so that header check is the only gate — don't remove it.
-- **Idempotent via `events.reminderSentAt`.** `reminders:dueForReminder` only returns events where it's unset, and the route marks each event *after* its sends. A crash mid-event retries that event; a retry never double-emails.
-- **`reminders:dueForReminder` returns attendee email addresses** — the one query that deliberately hands back PII. It is secret-gated (not JWT), and must never be called from the browser.
-- **"Tomorrow" is resolved in `America/Los_Angeles`**, not UTC. Cron fires in UTC, and near midnight a naive UTC date sends reminders a day early or late.
+- **`CRON_SECRET` bearer token is the authentication.** The route is public in `middleware.ts` because a cron has no Clerk session, so that header check is the only gate - don't remove it.
+- **Templates live in `app/utils/attendeeEmails.ts`** (plain text + table-based inline-style HTML, 18px+ text, one big button, every value escaped). The reminder shows the full weekday and date, time and place, and its button opens the **event page** (`/events/<id>`) to change or cancel. It used to link the feedback form, which asked "Did you make it?" before the event. The thank-you's one button goes to `/feedback/<id>`.
+- **Idempotent via `events.reminderSentAt` / `events.thankYouSentAt`.** `reminders:dueForReminder` / `dueForThankYou` only return events where the field is unset, and the route marks each event *after* its sends (`markReminded` / `markThanked`). A crash mid-event retries that event; a retry never double-emails.
+- **An event is never marked when every send failed** (recipients > 0, sent = 0, e.g. a Gmail auth error). The route logs it and answers **500** so the failed cron run shows in Vercel. A rerun the same day retries it; the next day's run has moved on to a new date, so fix it the same day. A partial failure is still marked, because re-sending would double-email the people who got it.
+- **These queries return attendee email addresses** - the only queries that deliberately hand back PII. They are secret-gated (not JWT), and must never be called from the browser.
+- **"Tomorrow" and "yesterday" are resolved in `America/Los_Angeles`**, not UTC. Cron fires in UTC, and near midnight a naive UTC date sends a day early or late.
 - One bad address doesn't abort the run; failures are counted per event and logged.
 
 ### Admin Dashboard (`/admin`)
@@ -370,6 +379,11 @@ Three anonymous, login-free signals that exist to answer "why did nobody come?".
 | Stripe checkout session | `app/api/checkout/route.ts` |
 | Payment door pass + receipt | `app/pay/success/page.tsx` |
 | Receipt email template | `app/utils/receiptEmail.ts` |
+| Reminder + thank-you email templates | `app/utils/attendeeEmails.ts` |
+| Daily reminder / thank-you cron | `app/api/sendReminders/route.ts` + `convex/reminders.ts` |
+| Resident-safe error text | `app/utils/friendlyError.ts` |
+| "Event isn't on the calendar" page | `app/components/EventGone.tsx` |
+| Friendly crash / 404 pages | `app/error.tsx`, `app/not-found.tsx` |
 | Payments table/functions | `convex/payments.ts` |
 | Public feedback page | `app/feedback/[eventId]/page.tsx` |
 | No-show reason options (shared) | `convex/feedbackOptions.ts` |

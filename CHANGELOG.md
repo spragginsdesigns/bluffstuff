@@ -2,6 +2,38 @@
 
 What changed on bluffstuff.vercel.app, newest first. Earlier history is in `git log`.
 
+## 2026-10-12: Fewer dead ends for residents
+
+A pass over the places where a resident could get stuck, see a confusing error, or land on a page that made no sense for that moment.
+
+**For residents**
+- Error messages are plain English now. Before, a problem with an RSVP could show something like "[CONVEX M(rsvps:create)] Server Error"; now it says what happened, for example "Please enter your name."
+- Opening your RSVP from the reminder email works. Gmail opens links in its own little browser, which didn't recognize your phone, so the site said "You're already on the list" and stopped there. Now it finds your RSVP by your email and lets you change or cancel it.
+- The reminder email is easier to read: big text, the full day and date (for example "Saturday, October 18"), time and place, and a big "See the event" button. Its link now opens your RSVP so you can change or cancel. It used to open a "Did you make it?" form for an event that hadn't happened yet.
+- The day after an event, everyone who RSVP'd with an email gets a short thank-you with one button: "Tell us how it went - 2 quick questions". It also says sorry we missed you, for anyone who couldn't make it.
+- The feedback page won't ask "Did you make it?" before the event. It says the event hasn't happened yet and offers a big button to the event page.
+- Paying online: the price is per person, so you can now pay for up to 6 people in one go. The door pass and the emailed receipt both say how many people you paid for, and the receipt links back to the event.
+- Old, mistyped or broken links show a friendly "This event isn't on the calendar anymore" or "We couldn't find that page" with a button to the upcoming events, instead of an error screen. If something breaks on our end, you see "Something went wrong on our end" with a Try again button.
+- After an event is edited, the flyer picture updates within minutes everywhere (phones, shared-link previews, the printer email). Before, phones could keep showing the old flyer.
+- Event cards on the home page are simpler: just RSVP (and Pay, for paid events) plus one "See details & add to calendar" button. Everything else is on the event's own page.
+- The event page now shows the flyer itself, and has one "Add to my calendar" button that picks the right calendar for your phone.
+- Dates read the way people talk: "Today at 6:00 PM", "Tomorrow at 6:00 PM", or "Saturday, October 18 at 6:00 PM", with a TODAY or TOMORROW tag on the card. An event drops off the list 3 hours after it starts instead of staying up all evening.
+- "I'd come to this" is now "Maybe - I'm interested", with a line explaining what it's for.
+- "Suggest an Event" goes to the idea board instead of the contact form.
+- Bigger text in the bottom tab bar, the calendar and error messages; bigger buttons (at least 44 pixels) for closing windows, the menu, the calendar arrows and footer links. Each calendar day is now a real button, and tapping one scrolls to that day's events.
+- Phones set to reduce motion no longer get the animations, and the FAQ and contact form show up right away on slow phones instead of waiting to fade in.
+- Sharing an event now includes the date, time and place in the message, not just the link.
+
+**For the committee**
+- Online payments now record how many people each payment covers, so the door count matches.
+- If the daily reminder run fails for a whole event (for example, the Gmail password stopped working), that event is no longer marked as sent, and the run shows as failed in Vercel. Rerun it the same day to send them.
+
+**Under the hood**
+- **Convex deploy required** (`bunx convex deploy -y`) before the frontend: new optional fields `payments.quantity` and `events.thankYouSentAt`; new functions `reminders:dueForThankYou` and `reminders:markThanked`; `events:getById` now takes a string and returns null for a malformed id; `rsvps:create` adopts an existing same-email RSVP instead of throwing; resident-facing throws in `rsvps`, `feedback`, `ideas`, `interest` and `contactMessages` are `ConvexError`.
+- New: `app/utils/friendlyError.ts` (resident-safe error text), `app/utils/escapeHtml.ts`, `app/utils/attendeeEmails.ts` (reminder + thank-you templates), `app/components/EventGone.tsx`, `app/error.tsx`; `app/not-found.tsx` rewritten.
+- `/api/checkout` line item has `adjustable_quantity` (1-6); `/pay/success` expands `line_items` to read it. Payer names and all other values in the receipt HTML are escaped.
+- `/api/flyer/[eventId]` sends `Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=86400` instead of next/og's one-year immutable default.
+
 ## 2026-10-12: Sign In is back in the navbar
 
 The previous release went too far and took Sign In off the navbar, leaving only a footer link labeled "Committee sign-in". Accounts are meant for everyone and required for no one, so:

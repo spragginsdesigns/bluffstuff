@@ -9,6 +9,8 @@ import RsvpModal from "./RsvpModal";
 import Button from "./ui/Button";
 import { scrollToSection } from "../utils/scroll";
 import { useVisitorId } from "../hooks/useVisitorId";
+import { dayOfMonth, friendlyWhen, shortMonth } from "../utils/parkDate";
+import DayPill from "./DayPill";
 
 interface HeroProps {
 	nextEvent: ConvexEvent | null;
@@ -58,7 +60,7 @@ const quickActions = [
 	},
 	{
 		label: "Suggest an Event",
-		target: "contact",
+		target: "ideas",
 		icon: (
 			<svg
 				className="w-6 h-6"
@@ -110,15 +112,13 @@ export default function Hero({ nextEvent, isLoading = false }: HeroProps) {
 		nextEvent && visitorId ? { eventId: nextEvent._id, visitorId } : "skip"
 	);
 
-	const eventDate = nextEvent ? new Date(nextEvent.date + "T00:00:00") : null;
-
 	return (
 		<section className="relative w-full overflow-hidden pt-16 pb-10 md:pt-24 md:pb-16">
 			{/* Soft warm background washes */}
 			<div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
 			<div className="absolute top-40 right-0 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
 
-			<div className="container mx-auto px-4 relative z-10">
+			<div className="container mx-auto relative z-10">
 				<div className="flex flex-col lg:flex-row lg:items-center gap-10 lg:gap-14">
 					{/* Left: headline + actions */}
 					<div className="w-full lg:w-1/2 text-center lg:text-left">
@@ -210,25 +210,26 @@ export default function Hero({ nextEvent, isLoading = false }: HeroProps) {
 									</div>
 									<div className="h-11 w-full rounded-xl bg-surface-2" />
 								</div>
-							) : nextEvent && eventDate ? (
+							) : nextEvent ? (
 								<div className="relative bg-surface rounded-3xl border border-border shadow-lifted p-6 md:p-7 -mt-14 mx-4 md:mx-6">
 									<div className="flex items-start justify-between gap-4 mb-4">
 										<div>
-											<p className="text-xs font-bold tracking-widest uppercase text-accent-strong mb-2">
-												Next Event
-											</p>
+											<div className="flex flex-wrap items-center gap-2 mb-2">
+												<p className="text-sm font-bold tracking-widest uppercase text-accent-strong">
+													Next Event
+												</p>
+												<DayPill date={nextEvent.date} />
+											</div>
 											<h2 className="font-display text-2xl md:text-3xl font-bold text-ink leading-snug">
 												{nextEvent.title}
 											</h2>
 										</div>
 										<div className="flex-shrink-0 bg-primary rounded-2xl px-4 py-3 text-center shadow-card">
-											<div className="text-xs text-primary-fg/90 font-semibold uppercase leading-none mb-1">
-												{eventDate.toLocaleDateString("en-US", {
-													month: "short"
-												})}
+											<div className="text-sm text-primary-fg/90 font-semibold uppercase leading-none mb-1">
+												{shortMonth(nextEvent.date)}
 											</div>
 											<div className="text-3xl text-primary-fg font-extrabold leading-none">
-												{eventDate.getDate()}
+												{dayOfMonth(nextEvent.date)}
 											</div>
 										</div>
 									</div>
@@ -250,12 +251,7 @@ export default function Hero({ nextEvent, isLoading = false }: HeroProps) {
 												/>
 											</svg>
 											<span className="text-base">
-												{eventDate.toLocaleDateString("en-US", {
-													weekday: "long",
-													month: "long",
-													day: "numeric"
-												})}{" "}
-												at {nextEvent.time}
+												{friendlyWhen(nextEvent.date, nextEvent.time)}
 											</span>
 										</div>
 										<div className="flex items-center gap-2.5 text-ink-muted">
@@ -351,7 +347,7 @@ export default function Hero({ nextEvent, isLoading = false }: HeroProps) {
 										Have an idea for the next get-together? We&apos;d love to
 										hear it.
 									</p>
-									<Button onClick={() => scrollToSection("contact")}>
+									<Button onClick={() => scrollToSection("ideas")}>
 										Suggest an Event
 									</Button>
 								</div>

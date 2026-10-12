@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConvexEvent } from "@/types/Event";
+import {
+	PARK_TIMEZONE,
+	dayOfMonth,
+	friendlyWhen,
+	localDateIn,
+	shortMonth
+} from "../utils/parkDate";
 
 interface MonthlyCalendarProps {
 	events: ConvexEvent[];
@@ -25,14 +32,41 @@ const MONTHS = [
 	"December"
 ];
 
+const WEEKDAYS_LONG = [
+	"Sunday",
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday"
+];
+
+const MONTH_ARROW_CLASSES =
+	"inline-flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl border border-border bg-surface text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors";
+
 export default function MonthlyCalendar({
 	events,
 	onEventClick
 }: MonthlyCalendarProps) {
-	const today = new Date();
-	const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-	const [currentYear, setCurrentYear] = useState(today.getFullYear());
+	// Park time, so the server render and the phone agree on "today" and on
+	// which month opens first.
+	const [todayYear, todayMonthNumber, todayDate] = localDateIn(PARK_TIMEZONE)
+		.split("-")
+		.map(Number);
+	const todayMonth = todayMonthNumber - 1;
+	const [currentMonth, setCurrentMonth] = useState(todayMonth);
+	const [currentYear, setCurrentYear] = useState(todayYear);
 	const [selectedDay, setSelectedDay] = useState<number | null>(null);
+	const listRef = useRef<HTMLDivElement>(null);
+
+	// The day's events render below the grid, often off-screen on a phone, so
+	// bring them into view or the tap looks like it did nothing.
+	useEffect(() => {
+		if (selectedDay !== null) {
+			listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+		}
+	}, [selectedDay]);
 
 	const navigateMonth = (direction: -1 | 1) => {
 		setSelectedDay(null);
@@ -82,9 +116,7 @@ export default function MonthlyCalendar({
 	}, [events, currentMonth, currentYear]);
 
 	const todayDay =
-		today.getMonth() === currentMonth && today.getFullYear() === currentYear
-			? today.getDate()
-			: -1;
+		todayMonth === currentMonth && todayYear === currentYear ? todayDate : -1;
 
 	// A tapped day filters the list below to just that day's events, so days
 	// with multiple events don't hide all but the first one.
@@ -102,7 +134,7 @@ export default function MonthlyCalendar({
 			<div className="flex items-center justify-between mb-6">
 				<button
 					onClick={() => navigateMonth(-1)}
-					className="p-2 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors"
+					className={MONTH_ARROW_CLASSES}
 					aria-label="Previous month"
 				>
 					<svg
@@ -125,7 +157,7 @@ export default function MonthlyCalendar({
 				</h3>
 				<button
 					onClick={() => navigateMonth(1)}
-					className="p-2 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors"
+					className={MONTH_ARROW_CLASSES}
 					aria-label="Next month"
 				>
 					<svg
@@ -146,12 +178,14 @@ export default function MonthlyCalendar({
 			</div>
 
 			{/* Calendar grid */}
-			<div className="grid grid-cols-7 gap-1 mb-8">
+			{/* gap-0.5 on phones keeps each day close to a 44px tap target at 375px */}
+			<div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-8">
 				{/* Day headers */}
 				{DAYS.map((day) => (
 					<div
 						key={day}
-						className="text-center text-xs md:text-sm font-medium text-ink-muted py-2"
+						aria-hidden="true"
+						className="text-center text-sm md:text-base font-semibold text-ink-muted py-2"
 					>
 						{day}
 					</div>
@@ -168,25 +202,33 @@ export default function MonthlyCalendar({
 					const dayEvents = eventsByDay.get(day);
 					const isToday = day === todayDay;
 					const isSelected = day === selectedDay;
+					const eventCount = dayEvents?.length ?? 0;
+					const weekday = WEEKDAYS_LONG[(firstDayOfMonth + i) % 7];
+					const dayLabel = `${weekday}, ${MONTHS[currentMonth]} ${day}${
+						isToday ? ", today" : ""
+					}, ${
+						eventCount === 0
+							? "no events"
+							: `${eventCount} ${eventCount === 1 ? "event" : "events"}`
+					}`;
 
 					return (
-						<motion.div
+						<button
 							key={day}
-							whileHover={dayEvents ? { scale: 1.05 } : {}}
-							className={`aspect-square rounded-lg flex flex-col items-center justify-center relative text-sm md:text-base transition-colors ${
+							type="button"
+							disabled={eventCount === 0}
+							aria-label={dayLabel}
+							aria-pressed={eventCount > 0 ? isSelected : undefined}
+							className={`aspect-square w-full rounded-lg flex flex-col items-center justify-center relative text-base transition-colors disabled:cursor-default ${
 								isSelected
-									? "ring-2 ring-primary bg-primary cursor-pointer"
+									? "ring-2 ring-primary bg-primary"
 									: isToday
 										? "ring-2 ring-primary bg-primary-soft"
 										: dayEvents
-											? "bg-primary-soft cursor-pointer hover:bg-primary-soft/70"
-											: "text-ink-faint"
+											? "bg-primary-soft hover:bg-primary-soft/70"
+											: "text-ink-muted"
 							}`}
-							onClick={() => {
-								if (dayEvents && dayEvents.length > 0) {
-									setSelectedDay(isSelected ? null : day);
-								}
-							}}
+							onClick={() => setSelectedDay(isSelected ? null : day)}
 						>
 							<span
 								className={`${
@@ -213,62 +255,66 @@ export default function MonthlyCalendar({
 									))}
 								</div>
 							)}
-						</motion.div>
+						</button>
 					);
 				})}
 			</div>
 
-			{/* Events for this month */}
-			<AnimatePresence mode="wait">
-				{listEvents.length > 0 ? (
-					<motion.div
-						key={`${currentMonth}-${currentYear}-${selectedDay ?? "all"}`}
-						initial={{ opacity: 0, y: 10 }}
-						animate={{ opacity: 1, y: 0 }}
-						exit={{ opacity: 0, y: -10 }}
-						className="space-y-3"
-					>
-						<div className="flex items-center justify-between mb-4">
-							<h4 className="text-lg font-semibold text-ink">{listTitle}</h4>
-							{selectedDayEvents && (
-								<button
-									onClick={() => setSelectedDay(null)}
-									className="text-sm text-primary hover:text-primary-strong font-medium transition-colors"
-								>
-									Show whole month
-								</button>
-							)}
-						</div>
-						{listEvents.map((event) => {
-							const eventDate = new Date(event.date + "T00:00:00");
-							return (
+			{/* Events for this month. initial={false}: whatever is on screen at
+			    first paint (including the server render) shows at full opacity;
+			    only later month/day switches animate. */}
+			<div ref={listRef} className="scroll-mt-24">
+				<AnimatePresence mode="wait" initial={false}>
+					{listEvents.length > 0 ? (
+						<motion.div
+							key={`${currentMonth}-${currentYear}-${selectedDay ?? "all"}`}
+							initial={{ opacity: 0, y: 10 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, y: -10 }}
+							className="space-y-3"
+						>
+							<div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+								<h4 className="text-lg font-semibold text-ink">{listTitle}</h4>
+								{selectedDayEvents && (
+									<button
+										type="button"
+										onClick={() => setSelectedDay(null)}
+										className="inline-flex items-center min-h-[44px] px-2 text-base text-primary-strong underline underline-offset-2 font-medium transition-colors"
+									>
+										Show whole month
+									</button>
+								)}
+							</div>
+							{listEvents.map((event) => (
 								<motion.button
 									key={event._id}
+									type="button"
 									onClick={() => onEventClick(event)}
 									whileHover={{ x: 4 }}
 									className="w-full text-left p-4 rounded-xl bg-surface border border-border hover:border-primary/50 transition-all group"
 								>
 									<div className="flex items-center gap-4">
-										<div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-soft flex flex-col items-center justify-center">
-											<span className="text-xs text-primary-strong font-medium leading-none">
-												{eventDate.toLocaleDateString("en-US", {
-													month: "short"
-												})}
+										<div className="flex-shrink-0 w-14 h-14 rounded-lg bg-primary-soft flex flex-col items-center justify-center">
+											<span className="text-sm text-primary-strong font-semibold uppercase leading-none mb-0.5">
+												{shortMonth(event.date)}
 											</span>
-											<span className="text-lg text-primary-strong font-bold leading-none">
-												{eventDate.getDate()}
+											<span className="text-xl text-primary-strong font-bold leading-none">
+												{dayOfMonth(event.date)}
 											</span>
 										</div>
 										<div className="flex-1 min-w-0">
-											<h5 className="text-ink font-medium group-hover:text-primary transition-colors truncate">
+											<h5 className="text-lg text-ink font-semibold group-hover:text-primary transition-colors">
 												{event.title}
 											</h5>
-											<p className="text-ink-muted text-sm">
-												{event.time} &middot; {event.location}
+											<p className="text-ink-muted text-base">
+												{friendlyWhen(event.date, event.time)}
+											</p>
+											<p className="text-ink-muted text-base">
+												{event.location}
 											</p>
 										</div>
 										<svg
-											className="w-5 h-5 text-ink-faint group-hover:text-primary transition-colors flex-shrink-0"
+											className="w-5 h-5 text-ink-muted group-hover:text-primary transition-colors flex-shrink-0"
 											fill="none"
 											viewBox="0 0 24 24"
 											stroke="currentColor"
@@ -283,21 +329,23 @@ export default function MonthlyCalendar({
 										</svg>
 									</div>
 								</motion.button>
-							);
-						})}
-					</motion.div>
-				) : (
-					<motion.div
-						key="no-events"
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						className="text-center py-8 text-ink-muted"
-					>
-						<p className="text-lg">No events scheduled this month</p>
-						<p className="text-sm mt-1">Check other months or stay tuned!</p>
-					</motion.div>
-				)}
-			</AnimatePresence>
+							))}
+						</motion.div>
+					) : (
+						<motion.div
+							key="no-events"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							className="text-center py-8 text-ink-muted"
+						>
+							<p className="text-lg">No events scheduled this month</p>
+							<p className="text-base mt-1">
+								Check other months or stay tuned!
+							</p>
+						</motion.div>
+					)}
+				</AnimatePresence>
+			</div>
 		</div>
 	);
 }

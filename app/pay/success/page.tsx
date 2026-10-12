@@ -4,8 +4,9 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { convexQuery } from "@/app/utils/convexServer";
-import { sendPaymentReceiptEmail } from "@/app/utils/receiptEmail";
+import { peopleLabel, sendPaymentReceiptEmail } from "@/app/utils/receiptEmail";
 import { buttonClasses } from "@/app/components/ui/buttonStyles";
+import { SITE_URL } from "@/app/config/site";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,11 @@ export default async function PaymentSuccessPage({
 	let session: Stripe.Checkout.Session;
 	try {
 		const stripe = new Stripe(stripeKey);
-		session = await stripe.checkout.sessions.retrieve(sessionId);
+		// line_items carries the quantity (people paid for); it isn't on the
+		// session unless expanded.
+		session = await stripe.checkout.sessions.retrieve(sessionId, {
+			expand: ["line_items"]
+		});
 	} catch (error) {
 		console.error("Error retrieving checkout session:", error);
 		return (
@@ -73,6 +78,9 @@ export default async function PaymentSuccessPage({
 		"Guest";
 	const payerEmail = session.customer_details?.email ?? "";
 	const amountCents = session.amount_total ?? 0;
+	// Checkout has a single per-person line item; sessions from before the
+	// quantity stepper existed were always 1.
+	const quantity = Math.max(1, session.line_items?.data[0]?.quantity ?? 1);
 	const confirmationCode = sessionId
 		.replace(/[^a-zA-Z0-9]/g, "")
 		.slice(-6)
@@ -103,6 +111,7 @@ export default async function PaymentSuccessPage({
 					payerName,
 					payerEmail,
 					amountCents,
+					quantity,
 					confirmationCode,
 					secret
 				});
@@ -124,7 +133,9 @@ export default async function PaymentSuccessPage({
 							style: "currency",
 							currency: "usd"
 						}),
-						confirmationCode
+						quantity,
+						confirmationCode,
+						eventUrl: `${SITE_URL}/events/${eventId}`
 					});
 				}
 			} catch (error) {
@@ -206,6 +217,12 @@ export default async function PaymentSuccessPage({
 								</span>
 							</div>
 						)}
+						<div className="flex justify-between gap-4">
+							<span className="text-ink-muted">Paid for</span>
+							<span className="text-ink font-bold text-right">
+								{peopleLabel(quantity)}
+							</span>
+						</div>
 						<div className="flex justify-between gap-4">
 							<span className="text-ink-muted">Paid</span>
 							<span className="text-accent-strong font-bold text-right">

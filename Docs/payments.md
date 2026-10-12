@@ -92,7 +92,8 @@ Sent from `/pay/success` immediately after the first successful record.
 - **Sends from:** the committee's existing Gmail — the **same `GMAIL_USER` / `GMAIL_APP_PASSWORD`** used for flyer emails (`atmosphere9999@gmail.com`). **No Google Cloud Console, SendGrid, or new credentials needed** — it reuses the flyer email transport (nodemailer + Gmail).
 - **From name:** "Woodward Bluffs Activities" (not the raw address).
 - **Template:** `app/utils/receiptEmail.ts` — table-based layout with **inline styles only** (no flexbox, no external assets), because Gmail and Yahoo strip modern CSS. Verified to render intact in Gmail.
-- **Contents:** the same door pass as the screen — green "✓ PAID" badge, big confirmation code, name / event / when / where / amount, and "Show this email at the door."
+- **Contents:** the same door pass as the screen - green "✓ PAID" badge, big confirmation code, name / event / when / where / **paid for (N people)** / amount, "Show this email at the door.", and a "See the event" button back to `/events/<id>`. Every value in the HTML is escaped.
+- **Quantity:** the price is per person, so Checkout shows a quantity stepper (`adjustable_quantity`, 1-6). `/pay/success` retrieves the session with `expand: ["line_items"]`, reads the quantity, shows it on the door pass and receipt, and stores it in `payments.quantity` (optional; absent on older rows means 1).
 
 ---
 

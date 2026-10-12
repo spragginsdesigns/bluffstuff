@@ -76,13 +76,10 @@ export default function ContactForm() {
 
 	return (
 		<section id="contact" className="py-16 md:py-24 scroll-mt-20">
-			<div className="container mx-auto px-4 max-w-2xl">
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.5 }}
-				>
+			<div className="container mx-auto max-w-2xl">
+				{/* Plain div, not a whileInView fade: that server-renders the whole
+				    form at opacity 0, invisible until the JS loads on a slow phone. */}
+				<div>
 					<div className="text-center mb-10">
 						<h2 className="font-display text-3xl md:text-4xl font-semibold text-ink">
 							Get Involved
@@ -211,7 +208,8 @@ export default function ContactForm() {
 									<motion.div
 										initial={{ opacity: 0, y: 5 }}
 										animate={{ opacity: 1, y: 0 }}
-										className="p-3 rounded-xl bg-danger-soft text-danger text-sm"
+										className="p-3 rounded-xl bg-danger-soft text-danger text-base"
+										role="alert"
 									>
 										{errorMessage}
 									</motion.div>
@@ -254,7 +252,7 @@ export default function ContactForm() {
 							</form>
 						)}
 					</div>
-				</motion.div>
+				</div>
 			</div>
 		</section>
 	);

@@ -28,9 +28,11 @@ export async function emailFlyerToPrinter(
 
 	// The PNG is rendered by the edge route (next/og needs the edge
 	// runtime); fetch it from our own origin, bypassing the data cache
-	// so the email always carries the current flyer.
+	// so the email always carries the current flyer. no-store only skips
+	// Next's cache; the `v` param also skips Vercel's CDN copy, which can be
+	// up to 5 minutes old right after an edit.
 	const flyerResponse = await fetch(
-		new URL(`/api/flyer/${eventId}`, requestUrl),
+		new URL(`/api/flyer/${eventId}?v=${Date.now()}`, requestUrl),
 		{ cache: "no-store" }
 	);
 	if (!flyerResponse.ok) {

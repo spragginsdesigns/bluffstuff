@@ -16,16 +16,23 @@ import { ConvexEvent } from "../types/Event";
 import { motion } from "framer-motion";
 import { COMMITTEE_MEMBERS } from "./data/committee";
 import { scrollToSection } from "./utils/scroll";
+import { PARK_TIMEZONE, hasEventEnded, localDateIn } from "./utils/parkDate";
 
 const EVENTS_PREVIEW_COUNT = 6;
 
 export default function Home() {
-	const localDate = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in user's timezone
+	// Park time, not the visitor's zone: the same on the server render, on a
+	// relative's phone out of state, and in the reminder cron.
+	const localDate = localDateIn(PARK_TIMEZONE);
 	const upcomingEventsRaw = useQuery(api.events.listUpcoming, { localDate });
-	// undefined means the query is still loading — show a spinner rather than
+	// undefined means the query is still loading - show a spinner rather than
 	// flashing the "no events" empty state at every visitor on a slow network.
 	const isLoading = upcomingEventsRaw === undefined;
-	const upcomingEvents = upcomingEventsRaw ?? [];
+	// Today's events stay until they're over, then drop out so this evening
+	// nobody is offered an RSVP for this morning's coffee hour.
+	const upcomingEvents = (upcomingEventsRaw ?? []).filter(
+		(event) => !hasEventEnded(event.date, event.time)
+	);
 	const [showAllEvents, setShowAllEvents] = useState(false);
 	const router = useRouter();
 
@@ -40,8 +47,9 @@ export default function Home() {
 	const hiddenCount = upcomingEvents.length - EVENTS_PREVIEW_COUNT;
 	const nextEvent = (upcomingEvents[0] as ConvexEvent | undefined) ?? null;
 
+	// Not <main>: the root layout already provides the page's main landmark.
 	return (
-		<main className="min-h-screen">
+		<div className="min-h-screen">
 			<Hero nextEvent={nextEvent} isLoading={isLoading} />
 
 			{/* Plain wrapper, not motion.div: an opacity-0 mount animation hides
@@ -50,7 +58,7 @@ export default function Home() {
 				{/* Events Section */}
 				<section
 					id="events"
-					className="container mx-auto px-4 py-12 md:py-16 scroll-mt-20"
+					className="container mx-auto py-12 md:py-16 scroll-mt-20"
 				>
 					<div className="text-center mb-8">
 						<h2 className="font-display text-3xl md:text-4xl font-semibold text-ink">
@@ -62,12 +70,15 @@ export default function Home() {
 					</div>
 
 					{isLoading ? (
-						<div className="flex justify-center py-12">
+						<div
+							className="flex flex-col items-center gap-3 py-12"
+							role="status"
+						>
 							<div
 								className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"
-								role="status"
-								aria-label="Loading events"
+								aria-hidden="true"
 							/>
+							<p className="text-ink-muted text-lg">Loading events…</p>
 						</div>
 					) : upcomingEvents.length === 0 ? (
 						<div className="text-center py-12">
@@ -90,7 +101,7 @@ export default function Home() {
 							<p className="text-ink-muted text-lg">
 								No upcoming events right now
 							</p>
-							<p className="text-ink-faint text-base mt-1">
+							<p className="text-ink-muted text-base mt-1">
 								Check back soon — we&apos;re always planning something fun!
 							</p>
 						</div>
@@ -135,9 +146,11 @@ export default function Home() {
 				{/* Monthly Calendar */}
 				<section
 					id="calendar"
-					className="container mx-auto px-4 py-8 md:py-12 scroll-mt-20"
+					className="container mx-auto py-8 md:py-12 scroll-mt-20"
 				>
-					<div className="bg-surface-2/60 rounded-3xl p-5 md:p-8 border border-border max-w-4xl mx-auto">
+					{/* Tight padding on phones: every pixel goes to the day cells,
+					    which need to be finger-sized at 375px. */}
+					<div className="bg-surface-2/60 rounded-3xl px-3 py-5 sm:p-5 md:p-8 border border-border max-w-4xl mx-auto">
 						<h2 className="font-display text-3xl md:text-4xl font-semibold mb-2 text-center text-ink">
 							This Month at the Bluffs
 						</h2>
@@ -159,7 +172,7 @@ export default function Home() {
 
 				{/* About the Committee */}
 				<section id="committee" className="py-12 md:py-16 scroll-mt-20">
-					<div className="container mx-auto px-4 max-w-4xl">
+					<div className="container mx-auto max-w-4xl">
 						<h2 className="font-display text-3xl md:text-4xl font-semibold mb-4 text-center text-ink">
 							Meet Your Activities Committee
 						</h2>
@@ -220,6 +233,6 @@ export default function Home() {
 				{/* Contact Form */}
 				<ContactForm />
 			</div>
-		</main>
+		</div>
 	);
 }

@@ -24,8 +24,15 @@ export default function AttendeesList({
 	return (
 		<Modal title={`Who's Going to ${eventTitle}`} onClose={onClose}>
 			{attendees === undefined ? (
-				<div className="flex items-center justify-center py-8">
-					<div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+				<div
+					className="flex flex-col items-center justify-center gap-3 py-8"
+					role="status"
+				>
+					<div
+						className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"
+						aria-hidden="true"
+					/>
+					<p className="text-ink-muted text-lg">Loading the guest list…</p>
 				</div>
 			) : attendees.length === 0 ? (
 				<div className="text-center py-8">
@@ -46,7 +53,7 @@ export default function AttendeesList({
 						</svg>
 					</div>
 					<p className="text-ink-muted">No one has RSVP&apos;d yet.</p>
-					<p className="text-ink-faint text-sm mt-1">
+					<p className="text-ink-muted text-base mt-1">
 						Be the first to sign up!
 					</p>
 				</div>

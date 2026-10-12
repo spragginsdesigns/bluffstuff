@@ -26,7 +26,7 @@ export default function NavBar() {
 	};
 
 	const linkClasses =
-		"text-ink-muted hover:text-ink px-3 py-2 rounded-lg text-base font-medium hover:bg-surface-2 transition-colors";
+		"text-ink-muted hover:text-ink px-3 py-2.5 min-h-[44px] rounded-lg text-base font-medium hover:bg-surface-2 transition-colors";
 
 	// Visually distinct from the public section links — it goes somewhere else
 	// entirely, and only the committee ever sees it.
@@ -104,7 +104,7 @@ export default function NavBar() {
 						</SignedIn>
 						<button
 							onClick={() => setIsOpen(!isOpen)}
-							className="inline-flex items-center justify-center p-2 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors"
+							className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors"
 							aria-label="Toggle menu"
 							aria-expanded={isOpen}
 						>

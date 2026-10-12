@@ -6,13 +6,16 @@ import { useParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { NO_SHOW_REASONS } from "@/convex/feedbackOptions";
 import { useVisitorId } from "../../hooks/useVisitorId";
 import Button from "../../components/ui/Button";
+import { buttonClasses } from "../../components/ui/buttonStyles";
 import Input from "../../components/ui/Input";
 import Textarea from "../../components/ui/Textarea";
 import Field from "../../components/ui/Field";
+import EventGone from "../../components/EventGone";
+import { PARK_TIMEZONE, localDateIn } from "../../utils/parkDate";
+import { friendlyError } from "../../utils/friendlyError";
 
 /**
  * Public post-event feedback. No sign-in on purpose: the answers worth having
@@ -25,10 +28,16 @@ const RATING_SCALE = [1, 2, 3, 4, 5];
 
 export default function EventFeedbackPage() {
 	const params = useParams<{ eventId: string }>();
-	const eventId = params?.eventId as Id<"events"> | undefined;
 	const visitorId = useVisitorId();
 
-	const event = useQuery(api.events.getById, eventId ? { id: eventId } : "skip");
+	// getById accepts any string and returns null for a malformed id. The
+	// other queries validate ids strictly, so they wait for the real event id
+	// rather than the raw URL segment, which could be a typo.
+	const event = useQuery(
+		api.events.getById,
+		params?.eventId ? { id: params.eventId } : "skip"
+	);
+	const eventId = event?._id;
 	const existing = useQuery(
 		api.feedback.getMine,
 		eventId && visitorId ? { eventId, visitorId } : "skip"
@@ -48,6 +57,7 @@ export default function EventFeedbackPage() {
 	const [status, setStatus] = useState<
 		"idle" | "submitting" | "success" | "error"
 	>("idle");
+	const [errorMessage, setErrorMessage] = useState("");
 
 	// Prefill from a previous answer so returning here amends it instead of
 	// looking like the response was lost.
@@ -84,7 +94,8 @@ export default function EventFeedbackPage() {
 				name: name.trim() || undefined
 			});
 			setStatus("success");
-		} catch {
+		} catch (err) {
+			setErrorMessage(friendlyError(err));
 			setStatus("error");
 		}
 	};
@@ -98,22 +109,42 @@ export default function EventFeedbackPage() {
 	}
 
 	if (event === null) {
-		return (
-			<div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 text-center">
-				<p className="text-ink-muted text-lg">
-					We couldn&apos;t find that event.
-				</p>
-				<Link href="/" className="text-primary-strong underline">
-					Back to the Bluffs
-				</Link>
-			</div>
-		);
+		return <EventGone />;
 	}
 
 	const eventDate = new Date(event.date + "T00:00:00").toLocaleDateString(
 		"en-US",
 		{ weekday: "long", month: "long", day: "numeric" }
 	);
+
+	// "Did you make it?" makes no sense before the event. Residents land here
+	// early from old links or a mis-tapped button; send them to the event page,
+	// where they can RSVP, change or cancel. Today counts as not yet: the
+	// event may still be hours away.
+	if (event.date >= localDateIn(PARK_TIMEZONE)) {
+		return (
+			<div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-16 text-center">
+				<div className="max-w-xl">
+					<p className="text-accent-strong font-medium text-base uppercase tracking-wide mb-2">
+						{eventDate}
+					</p>
+					<h1 className="font-display text-3xl font-bold text-ink mb-3">
+						This event hasn&apos;t happened yet
+					</h1>
+					<p className="text-ink-muted text-lg mb-8">
+						{event.title} is still coming up. You can see the details, RSVP,
+						or change your RSVP on the event page.
+					</p>
+					<Link
+						href={`/events/${event._id}`}
+						className={buttonClasses("primary", "lg", "w-full sm:w-auto")}
+					>
+						See the event / change your RSVP
+					</Link>
+				</div>
+			</div>
+		);
+	}
 
 	if (status === "success") {
 		return (
@@ -148,13 +179,14 @@ export default function EventFeedbackPage() {
 						updated.
 					</p>
 					<div className="flex flex-col gap-3">
-						<Link href="/#ideas">
-							<Button className="w-full">Suggest an Event Idea</Button>
+						<Link
+							href="/#ideas"
+							className={buttonClasses("primary", "md", "w-full")}
+						>
+							Suggest an Event Idea
 						</Link>
-						<Link href="/">
-							<Button variant="outline" className="w-full">
-								Back to the Bluffs
-							</Button>
+						<Link href="/" className={buttonClasses("outline", "md", "w-full")}>
+							Back to the Bluffs
 						</Link>
 					</div>
 				</motion.div>
@@ -352,8 +384,11 @@ export default function EventFeedbackPage() {
 					)}
 
 					{status === "error" && (
-						<p className="p-3 rounded-xl bg-danger-soft text-danger text-sm">
-							Something went wrong. Please try again.
+						<p
+							role="alert"
+							className="p-3 rounded-xl bg-danger-soft text-danger text-base"
+						>
+							{errorMessage}
 						</p>
 					)}
 

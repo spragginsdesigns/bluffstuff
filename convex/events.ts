@@ -71,10 +71,17 @@ export const listAll = query({
 	}
 });
 
+/**
+ * Takes a plain string, not v.id, because ids arrive from URLs (flyer QRs,
+ * shared links, typos). A malformed id must read as "not found" so pages can
+ * show their friendly message; v.id would throw and crash the page instead.
+ */
 export const getById = query({
-	args: { id: v.id("events") },
+	args: { id: v.string() },
 	handler: async (ctx, args) => {
-		return await ctx.db.get(args.id);
+		const id = ctx.db.normalizeId("events", args.id);
+		if (!id) return null;
+		return await ctx.db.get(id);
 	}
 });
 

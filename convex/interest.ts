@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
 /**
  * One-tap interest on upcoming events. No form, no login — the whole point is
@@ -17,13 +17,17 @@ export const toggle = mutation({
 	args: { eventId: v.id("events"), visitorId: v.string() },
 	handler: async (ctx, args) => {
 		const visitorId = args.visitorId.trim().slice(0, MAX_VISITOR_ID_LENGTH);
+		// ConvexError, not Error: production Convex only shows residents the
+		// text of a ConvexError; a plain Error becomes "Server Error".
 		if (!visitorId) {
-			throw new Error("Missing visitor id");
+			throw new ConvexError(
+				"Something went wrong. Please refresh the page and try again."
+			);
 		}
 
 		const event = await ctx.db.get(args.eventId);
 		if (!event) {
-			throw new Error("Event not found");
+			throw new ConvexError("This event isn't on the calendar anymore.");
 		}
 
 		const existing = await ctx.db

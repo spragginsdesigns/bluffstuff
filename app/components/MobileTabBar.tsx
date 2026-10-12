@@ -125,40 +125,51 @@ export default function MobileTabBar() {
 	if (pathname !== "/") return null;
 
 	return (
-		<nav
-			aria-label="Quick navigation"
-			className="md:hidden print:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/90 backdrop-blur-lg border-t border-border pb-[env(safe-area-inset-bottom)]"
-		>
-			{/* Column count follows the config — Tailwind can't build a dynamic
-			    `grid-cols-N`, so the track list is set inline. */}
+		<>
+			{/* Spacer so the fixed bar never covers the footer. It lives here,
+			    not in the layout, so pages without the bar don't get a blank
+			    strip. Sized for the bar plus the iPhone home-indicator inset. */}
 			<div
-				className="grid"
-				style={{
-					gridTemplateColumns: `repeat(${MOBILE_TABS.length}, minmax(0, 1fr))`
-				}}
+				className="h-[calc(4.5rem+env(safe-area-inset-bottom))] md:hidden"
+				aria-hidden
+			/>
+			<nav
+				aria-label="Quick navigation"
+				className="md:hidden print:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/90 backdrop-blur-lg border-t border-border pb-[env(safe-area-inset-bottom)]"
 			>
-				{MOBILE_TABS.map((tab) => {
-					const isActive = activeId === tab.id;
-					return (
-						<button
-							key={tab.id}
-							onClick={() => {
-								setActiveId(tab.id);
-								scrollToSection(tab.id, pathname);
-							}}
-							aria-current={isActive ? "true" : undefined}
-							className={`flex flex-col items-center justify-center gap-1 px-0.5 py-2.5 transition-colors min-h-[56px] ${
-								isActive
-									? "text-primary"
-									: "text-ink-faint hover:text-ink active:text-primary"
-							}`}
-						>
-							{TAB_ICONS[tab.id]}
-							<span className="text-[11px] font-medium">{tab.label}</span>
-						</button>
-					);
-				})}
-			</div>
-		</nav>
+				{/* Column count follows the config - Tailwind can't build a dynamic
+				    `grid-cols-N`, so the track list is set inline. */}
+				<div
+					className="grid"
+					style={{
+						gridTemplateColumns: `repeat(${MOBILE_TABS.length}, minmax(0, 1fr))`
+					}}
+				>
+					{MOBILE_TABS.map((tab) => {
+						const isActive = activeId === tab.id;
+						return (
+							<button
+								key={tab.id}
+								onClick={() => {
+									setActiveId(tab.id);
+									scrollToSection(tab.id, pathname);
+								}}
+								aria-current={isActive ? "true" : undefined}
+								className={`flex flex-col items-center justify-center gap-1 px-0.5 py-2.5 transition-colors min-h-[56px] ${
+									isActive
+										? "text-primary"
+										: "text-ink-muted hover:text-ink active:text-primary"
+								}`}
+							>
+								{TAB_ICONS[tab.id]}
+								<span className="text-sm font-semibold leading-tight">
+									{tab.label}
+								</span>
+							</button>
+						);
+					})}
+				</div>
+			</nav>
+		</>
 	);
 }

@@ -63,7 +63,7 @@ export default function FAQ() {
 
 	return (
 		<section id="faq" className="py-12 md:py-16 scroll-mt-20">
-			<div className="container mx-auto px-4 max-w-4xl">
+			<div className="container mx-auto max-w-4xl">
 				<div className="text-center mb-8 md:mb-12">
 					<h2 className="font-display text-3xl md:text-4xl font-semibold text-ink">
 						Common Questions
@@ -76,12 +76,11 @@ export default function FAQ() {
 				<div className="space-y-3">
 					{faqs.map((faq, index) => {
 						const isOpen = openIndex === index;
+						// Plain div: a motion mount animation would server-render
+						// every question at opacity 0 until the JS loads.
 						return (
-							<motion.div
+							<div
 								key={index}
-								initial={{ opacity: 0, y: 20 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ delay: index * 0.05 }}
 								className="bg-surface rounded-xl border border-border overflow-hidden shadow-card"
 							>
 								<button
@@ -124,7 +123,7 @@ export default function FAQ() {
 										</motion.div>
 									)}
 								</AnimatePresence>
-							</motion.div>
+							</div>
 						);
 					})}
 				</div>

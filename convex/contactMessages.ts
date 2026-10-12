@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { requireCommittee } from "./committeeAuth";
 
 export const submit = mutation({
@@ -12,11 +12,14 @@ export const submit = mutation({
 	},
 	handler: async (ctx, args) => {
 		// Plenty of residents would rather leave a phone number than an email.
-		// Either is fine, but the committee needs some way to reply.
+		// Either is fine, but the committee needs some way to reply. ConvexError
+		// so production shows this text instead of a generic "Server Error".
 		const email = args.email?.trim() || undefined;
 		const phone = args.phone?.trim() || undefined;
 		if (!email && !phone) {
-			throw new Error("Please leave an email or a phone number so we can reply");
+			throw new ConvexError(
+				"Please leave an email or a phone number so we can reply."
+			);
 		}
 
 		return await ctx.db.insert("contactMessages", {

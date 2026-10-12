@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { Doc } from "./_generated/dataModel";
 import { isCommittee } from "./committeeAuth";
 
@@ -89,8 +89,15 @@ export const myRsvp = query({
 });
 
 /**
- * Create an RSVP, or amend this browser's existing one. Re-submitting from
- * the same phone changes the headcount instead of erroring.
+ * Create an RSVP, or amend an existing one. Re-submitting from the same phone
+ * changes the headcount instead of erroring.
+ *
+ * If this browser has no RSVP but the same email is already on this event's
+ * list, that row is amended and adopted by this browser. The reminder email
+ * opens in Gmail's in-app browser, which has its own localStorage and so a
+ * different visitorId; refusing there left residents unable to change or
+ * cancel the RSVP they were reminded about. Messages are ConvexErrors
+ * because production Convex hides plain Error text from the browser.
  */
 export const create = mutation({
 	args: {
@@ -105,12 +112,12 @@ export const create = mutation({
 	handler: async (ctx, args) => {
 		const name = clean(args.name);
 		if (!name) {
-			throw new Error("Please enter your name");
+			throw new ConvexError("Please enter your name.");
 		}
 
 		const event = await ctx.db.get(args.eventId);
 		if (!event || !event.isActive) {
-			throw new Error("This event is no longer on the calendar");
+			throw new ConvexError("This event isn't on the calendar anymore.");
 		}
 
 		const partySize = Math.min(
@@ -145,8 +152,15 @@ export const create = mutation({
 				.query("rsvps")
 				.withIndex("by_event", (q) => q.eq("eventId", args.eventId))
 				.collect();
-			if (existing.some((r) => r.email?.trim().toLowerCase() === email)) {
-				throw new Error("You're already on the list for this event");
+			const sameEmail = existing.find(
+				(r) => r.email?.trim().toLowerCase() === email
+			);
+			if (sameEmail) {
+				await ctx.db.patch(sameEmail._id, {
+					...fields,
+					...(visitorId ? { visitorId } : {})
+				});
+				return sameEmail._id;
 			}
 		}
 

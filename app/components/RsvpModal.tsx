@@ -17,6 +17,7 @@ import {
 	generateGoogleCalendarLink,
 	downloadICSFile
 } from "../utils/calendar";
+import { friendlyError } from "../utils/friendlyError";
 
 /** This browser's existing RSVP, from `rsvps:myRsvp`. */
 export interface ExistingRsvp {
@@ -116,7 +117,7 @@ export default function RsvpModal({
 			setStatus("success");
 		} catch (err) {
 			setStatus("error");
-			setErrorMessage(cleanConvexError(err));
+			setErrorMessage(friendlyError(err));
 		}
 	};
 
@@ -127,7 +128,7 @@ export default function RsvpModal({
 			setStatus("cancelled");
 		} catch (err) {
 			setStatus("error");
-			setErrorMessage(cleanConvexError(err));
+			setErrorMessage(friendlyError(err));
 		}
 	};
 
@@ -349,13 +350,4 @@ export default function RsvpModal({
 			)}
 		</Modal>
 	);
-}
-
-/** Convex wraps thrown messages ("[CONVEX M(...)] Uncaught Error: ..."). */
-function cleanConvexError(err: unknown): string {
-	if (!(err instanceof Error) || !err.message) {
-		return "Something went wrong. Please try again.";
-	}
-	const match = err.message.match(/Uncaught Error: (.*?)(?:\n|$)/);
-	return match?.[1] ?? err.message;
 }

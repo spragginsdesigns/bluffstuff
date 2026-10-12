@@ -55,7 +55,10 @@ export async function POST(request: NextRequest) {
 			mode: "payment",
 			line_items: [
 				{
+					// The price is per person, so a couple can pay for both in
+					// one checkout. Stripe shows a quantity stepper starting at 1.
 					quantity: 1,
+					adjustable_quantity: { enabled: true, minimum: 1, maximum: 6 },
 					price_data: {
 						currency: "usd",
 						unit_amount: event.priceCents,

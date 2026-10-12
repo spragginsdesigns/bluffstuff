@@ -7,19 +7,23 @@ interface CalendarEventInput {
 }
 
 /**
- * Parse a time string like "6:00 PM", "2:30 pm", or "14:00" into hours and minutes.
+ * Parse a time string like "6:00 PM", "2:30 pm", "6 PM", "6:00 p.m." or
+ * "14:00" into hours and minutes. The committee types times free-hand, so
+ * the short and dotted forms are common.
  */
-function parseTimeString(
+export function parseTimeString(
 	timeStr: string
 ): { hours: number; minutes: number } | null {
-	const match12 = timeStr.match(/(\d{1,2}):(\d{2})\s*(am|pm)/i);
+	const match12 = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\b/i);
 	if (match12) {
 		let hours = parseInt(match12[1], 10);
-		const minutes = parseInt(match12[2], 10);
+		const minutes = match12[2] ? parseInt(match12[2], 10) : 0;
 		const period = match12[3].toLowerCase();
-		if (period === "pm" && hours !== 12) hours += 12;
-		if (period === "am" && hours === 12) hours = 0;
-		return { hours, minutes };
+		if (hours >= 1 && hours <= 12 && minutes < 60) {
+			if (period === "p" && hours !== 12) hours += 12;
+			if (period === "a" && hours === 12) hours = 0;
+			return { hours, minutes };
+		}
 	}
 
 	const match24 = timeStr.match(/(\d{1,2}):(\d{2})/);

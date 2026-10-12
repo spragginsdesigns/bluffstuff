@@ -14,6 +14,7 @@ export const record = mutation({
 		payerName: v.string(),
 		payerEmail: v.string(),
 		amountCents: v.number(),
+		quantity: v.optional(v.number()),
 		confirmationCode: v.string(),
 		secret: v.string()
 	},

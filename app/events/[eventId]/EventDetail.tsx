@@ -8,6 +8,12 @@ import EventActions, {
 	formatEventPrice
 } from "@/app/components/EventActions";
 import { buttonClasses } from "@/app/components/ui/buttonStyles";
+import {
+	dayOfMonth,
+	friendlyWhen,
+	longWhen,
+	shortMonth
+} from "@/app/utils/parkDate";
 
 interface EventDetailProps {
 	event: ConvexEvent;
@@ -20,7 +26,7 @@ export default function EventDetail({ event, isPast }: EventDetailProps) {
 		eventId: event._id
 	});
 	const price = formatEventPrice(event.priceCents);
-	const eventDate = new Date(event.date + "T00:00:00");
+	const flyerUrl = `/api/flyer/${event._id}`;
 
 	return (
 		<article className="max-w-xl mx-auto py-6 md:py-12">
@@ -35,10 +41,10 @@ export default function EventDetail({ event, isPast }: EventDetailProps) {
 				<div className="flex items-center gap-4 mb-5">
 					<div className="flex-shrink-0 bg-primary rounded-2xl px-4 py-3 text-center shadow-card">
 						<div className="text-sm text-primary-fg/90 font-semibold uppercase leading-none mb-1">
-							{eventDate.toLocaleDateString("en-US", { month: "short" })}
+							{shortMonth(event.date)}
 						</div>
 						<div className="text-3xl text-primary-fg font-extrabold leading-none">
-							{eventDate.getDate()}
+							{dayOfMonth(event.date)}
 						</div>
 					</div>
 					<h1 className="min-w-0 font-display text-3xl md:text-4xl font-bold text-ink leading-tight">
@@ -48,26 +54,25 @@ export default function EventDetail({ event, isPast }: EventDetailProps) {
 
 				<dl className="space-y-3 mb-6 text-lg">
 					<div>
-						<dt className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+						<dt className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
 							When
 						</dt>
+						{/* Server and phone both resolve "today" in park time, so
+						    this hydrates identically. */}
 						<dd className="text-ink">
-							{eventDate.toLocaleDateString("en-US", {
-								weekday: "long",
-								month: "long",
-								day: "numeric"
-							})}{" "}
-							at {event.time}
+							{isPast
+								? longWhen(event.date, event.time)
+								: friendlyWhen(event.date, event.time)}
 						</dd>
 					</div>
 					<div>
-						<dt className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+						<dt className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
 							Where
 						</dt>
 						<dd className="text-ink">{event.location}</dd>
 					</div>
 					<div>
-						<dt className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+						<dt className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
 							Cost
 						</dt>
 						<dd className="text-ink">
@@ -78,7 +83,7 @@ export default function EventDetail({ event, isPast }: EventDetailProps) {
 					</div>
 					{rsvpCount !== undefined && rsvpCount > 0 && (
 						<div>
-							<dt className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+							<dt className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
 								{isPast ? "RSVP'd" : "Going so far"}
 							</dt>
 							<dd className="text-ink">
@@ -114,6 +119,40 @@ export default function EventDetail({ event, isPast }: EventDetailProps) {
 					<EventActions event={event} />
 				)}
 			</div>
+
+			{/* The printed flyer, so people recognise the poster from the
+			    clubhouse board. It sits below the actions to keep RSVP near the
+			    top; tapping opens the full-size image to zoom or save. */}
+			<section className="mt-8" aria-labelledby="flyer-heading">
+				<h2
+					id="flyer-heading"
+					className="font-display text-xl font-semibold text-ink mb-3"
+				>
+					The flyer
+				</h2>
+				<a
+					href={flyerUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="block rounded-2xl overflow-hidden border border-border shadow-card bg-surface-2"
+				>
+					{/* Plain <img>: the PNG comes from a dynamic API route, so
+					    next/image optimisation would only add a second render. */}
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
+						src={flyerUrl}
+						alt={`Flyer for ${event.title}: ${longWhen(event.date, event.time)}, ${event.location}`}
+						width={1275}
+						height={1650}
+						loading="lazy"
+						decoding="async"
+						className="block w-full h-auto"
+					/>
+				</a>
+				<p className="mt-2 text-base text-ink-muted text-center">
+					Tap the flyer to see it full size.
+				</p>
+			</section>
 		</article>
 	);
 }

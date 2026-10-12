@@ -6,6 +6,9 @@ import { api } from "@/convex/_generated/api";
 import { ConvexEvent } from "@/types/Event";
 import { motion } from "framer-motion";
 import EventActions, { formatEventPrice } from "./EventActions";
+import DayPill from "./DayPill";
+import { buttonClasses } from "./ui/buttonStyles";
+import { dayOfMonth, friendlyWhen, shortMonth } from "../utils/parkDate";
 
 interface EventCardProps {
 	event: ConvexEvent;
@@ -17,13 +20,6 @@ export default function EventCard({ event }: EventCardProps) {
 		eventId: event._id
 	});
 
-	const eventDate = new Date(event.date + "T00:00:00");
-	const formattedDate = eventDate.toLocaleDateString("en-US", {
-		weekday: "short",
-		month: "long",
-		day: "numeric"
-	});
-
 	return (
 		<motion.div
 			whileHover={{ y: -4 }}
@@ -33,21 +29,24 @@ export default function EventCard({ event }: EventCardProps) {
 			<div className="p-5 md:p-6">
 				<div className="flex items-start justify-between gap-3 mb-4">
 					<div className="flex-shrink-0 bg-primary rounded-2xl px-3.5 py-2.5 text-center shadow-card">
-						<div className="text-xs text-primary-fg/90 font-semibold uppercase leading-none mb-1">
-							{eventDate.toLocaleDateString("en-US", { month: "short" })}
+						<div className="text-sm text-primary-fg/90 font-semibold uppercase leading-none mb-1">
+							{shortMonth(event.date)}
 						</div>
 						<div className="text-2xl text-primary-fg font-extrabold leading-none">
-							{eventDate.getDate()}
+							{dayOfMonth(event.date)}
 						</div>
 					</div>
-					<h3 className="flex-1 min-w-0 font-display text-xl md:text-2xl font-bold text-ink leading-snug">
-						<Link
-							href={`/events/${event._id}`}
-							className="hover:text-primary-strong transition-colors"
-						>
-							{event.title}
-						</Link>
-					</h3>
+					<div className="flex-1 min-w-0">
+						<DayPill date={event.date} />
+						<h3 className="mt-1 font-display text-xl md:text-2xl font-bold text-ink leading-snug">
+							<Link
+								href={`/events/${event._id}`}
+								className="hover:text-primary-strong transition-colors"
+							>
+								{event.title}
+							</Link>
+						</h3>
+					</div>
 					{rsvpCount !== undefined && rsvpCount > 0 && (
 						<div className="flex-shrink-0 bg-accent-soft rounded-full px-3 py-1 text-sm text-accent-strong font-semibold whitespace-nowrap">
 							{rsvpCount} going
@@ -72,7 +71,7 @@ export default function EventCard({ event }: EventCardProps) {
 								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
 							/>
 						</svg>
-						{formattedDate} at {event.time}
+						{friendlyWhen(event.date, event.time)}
 					</div>
 					<div className="flex items-center gap-2.5 text-ink-muted">
 						<svg
@@ -118,17 +117,20 @@ export default function EventCard({ event }: EventCardProps) {
 					)}
 				</div>
 
-				<p className="text-ink-muted text-base mb-1 line-clamp-2 leading-relaxed">
+				<p className="text-ink-muted text-base mb-4 line-clamp-2 leading-relaxed">
 					{event.description}
 				</p>
+
+				<EventActions event={event} compact />
+
+				{/* Who's going, interest, calendar and share live on the event
+				    page, so the card stays at two or three clear buttons. */}
 				<Link
 					href={`/events/${event._id}`}
-					className="inline-flex items-center min-h-[44px] mb-2 text-base font-semibold text-primary-strong underline underline-offset-2"
+					className={buttonClasses("outline", "md", "w-full mt-3 min-h-[48px]")}
 				>
-					See full details
+					See details &amp; add to calendar
 				</Link>
-
-				<EventActions event={event} />
 			</div>
 		</motion.div>
 	);

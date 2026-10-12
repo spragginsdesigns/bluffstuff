@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { api } from "@/convex/_generated/api";
 import { buttonClasses } from "./ui/buttonStyles";
+import { PARK_TIMEZONE, localDateIn } from "../utils/parkDate";
 
 const RECENT_EVENT_COUNT = 3;
 
@@ -14,7 +15,7 @@ const RECENT_EVENT_COUNT = 3;
  * Framed to invite no-shows too — they're the ones with the useful answer.
  */
 export default function RecentEventsFeedback() {
-	const localDate = new Date().toLocaleDateString("en-CA");
+	const localDate = localDateIn(PARK_TIMEZONE);
 	const pastEvents = useQuery(api.events.listRecentPast, {
 		localDate,
 		limit: RECENT_EVENT_COUNT
@@ -26,7 +27,7 @@ export default function RecentEventsFeedback() {
 
 	return (
 		<section id="recent" className="py-12 md:py-16 scroll-mt-20">
-			<div className="container mx-auto px-4 max-w-3xl">
+			<div className="container mx-auto max-w-3xl">
 				<div className="text-center mb-8">
 					<h2 className="font-display text-3xl md:text-4xl font-semibold text-ink">
 						How Did We Do?

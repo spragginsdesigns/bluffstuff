@@ -67,10 +67,10 @@ export default function Modal({
 						type="button"
 						onClick={onClose}
 						aria-label="Close dialog"
-						className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+						className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
 					>
 						<svg
-							className="h-5 w-5"
+							className="h-6 w-6"
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"

@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { useIsCommittee } from "../../hooks/useIsCommittee";
 import Button, { buttonClasses } from "../../components/ui/Button";
+import EventGone from "../../components/EventGone";
 
 /**
  * Shows the generated flyer PNG (same image that gets emailed to the
@@ -17,10 +17,9 @@ import Button, { buttonClasses } from "../../components/ui/Button";
 export default function EventFlyerPage() {
 	const params = useParams<{ eventId: string }>();
 	const eventId = params?.eventId;
-	const event = useQuery(
-		api.events.getById,
-		eventId ? { id: eventId as Id<"events"> } : "skip"
-	);
+	// getById takes any string and returns null for a malformed id, so a
+	// mistyped flyer link lands on the friendly page instead of crashing.
+	const event = useQuery(api.events.getById, eventId ? { id: eventId } : "skip");
 	const { isCommittee } = useIsCommittee();
 	const [emailStatus, setEmailStatus] = useState<
 		"idle" | "sending" | "sent" | "error"
@@ -68,11 +67,7 @@ export default function EventFlyerPage() {
 	}
 
 	if (event === null) {
-		return (
-			<div className="min-h-screen flex items-center justify-center text-ink-muted">
-				Event not found.
-			</div>
-		);
+		return <EventGone />;
 	}
 
 	// Once the event has passed, the flyer QR that residents already scanned

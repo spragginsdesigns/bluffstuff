@@ -4,6 +4,11 @@ import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "../config/nav";
 import { scrollToSection } from "../utils/scroll";
 
+// Finger-sized rows: the links sit close together, and a miss scrolls the
+// page somewhere unexpected.
+const linkClasses =
+	"inline-flex items-center min-h-[44px] text-ink-muted hover:text-ink text-base transition-colors";
+
 export default function Footer() {
 	const pathname = usePathname();
 
@@ -22,11 +27,11 @@ export default function Footer() {
 					</div>
 					<div>
 						<h3 className="text-lg font-semibold mb-3 text-ink">Quick Links</h3>
-						<ul className="space-y-2">
+						<ul>
 							<li>
 								<button
 									onClick={() => scrollToSection("top", pathname)}
-									className="text-ink-muted hover:text-ink text-base transition-colors"
+									className={linkClasses}
 								>
 									Home
 								</button>
@@ -35,7 +40,7 @@ export default function Footer() {
 								<li key={id}>
 									<button
 										onClick={() => scrollToSection(id, pathname)}
-										className="text-ink-muted hover:text-ink text-base transition-colors"
+										className={linkClasses}
 									>
 										{label}
 									</button>
@@ -50,7 +55,7 @@ export default function Footer() {
 						<ul className="text-ink-muted text-base space-y-2">
 							<li>Woodward Bluffs Mobile Home Park</li>
 							<li>Fresno, CA</li>
-							<li className="pt-2 text-ink-faint">
+							<li className="pt-2 text-ink-muted">
 								Committee meetings: First Monday of every month
 							</li>
 						</ul>

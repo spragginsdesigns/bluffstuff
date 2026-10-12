@@ -43,6 +43,9 @@ export default defineSchema({
 		// This is the idempotency key for the cron: a retry must never
 		// double-email residents.
 		reminderSentAt: v.optional(v.number()),
+		// Set once the day-after thank-you (with the feedback link) has gone
+		// out. Same idempotency role as reminderSentAt, for the same cron.
+		thankYouSentAt: v.optional(v.number()),
 		createdAt: v.number(),
 		updatedAt: v.number()
 	})
@@ -74,6 +77,9 @@ export default defineSchema({
 		payerName: v.string(),
 		payerEmail: v.string(),
 		amountCents: v.number(),
+		// People paid for (Stripe line-item quantity). Optional: rows from
+		// before adjustable quantity existed were always one person.
+		quantity: v.optional(v.number()),
 		confirmationCode: v.string(),
 		createdAt: v.number()
 	})

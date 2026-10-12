@@ -126,8 +126,7 @@ export default function RootLayout({
 						</main>
 						<div className="print:hidden">
 							<Footer />
-							{/* Spacer so the mobile tab bar doesn't cover the footer */}
-							<div className="h-16 md:hidden" aria-hidden />
+							{/* Renders its own footer spacer, only where the bar shows */}
 							<MobileTabBar />
 						</div>
 					</ConvexClientProvider>

@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { Doc } from "./_generated/dataModel";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { isCommittee, requireCommittee } from "./committeeAuth";
 import {
 	MAX_IDEA_DETAILS_LENGTH,
@@ -27,10 +27,14 @@ function cleanText(
 	return trimmed ? trimmed.slice(0, maxLength) : undefined;
 }
 
+// Resident-facing failures throw ConvexError: production Convex only shows
+// the browser the text of a ConvexError; a plain Error becomes "Server Error".
 function requireVisitorId(raw: string): string {
 	const visitorId = raw.trim().slice(0, MAX_VISITOR_ID_LENGTH);
 	if (!visitorId) {
-		throw new Error("Missing visitor id");
+		throw new ConvexError(
+			"Something went wrong. Please refresh the page and try again."
+		);
 	}
 	return visitorId;
 }
@@ -88,7 +92,7 @@ export const submit = mutation({
 		const visitorId = requireVisitorId(args.visitorId);
 		const title = cleanText(args.title, MAX_IDEA_TITLE_LENGTH);
 		if (!title) {
-			throw new Error("An idea needs a title");
+			throw new ConvexError("Please give your idea a short title.");
 		}
 
 		const ideaId = await ctx.db.insert("eventIdeas", {
@@ -119,7 +123,7 @@ export const toggleVote = mutation({
 
 		const idea = await ctx.db.get(args.ideaId);
 		if (!idea) {
-			throw new Error("Idea not found");
+			throw new ConvexError("That idea isn't on the board anymore.");
 		}
 
 		const existing = await ctx.db

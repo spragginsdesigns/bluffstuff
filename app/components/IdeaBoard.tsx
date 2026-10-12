@@ -63,7 +63,7 @@ export default function IdeaBoard() {
 
 	return (
 		<section id="ideas" className="py-12 md:py-16 scroll-mt-20">
-			<div className="container mx-auto px-4 max-w-3xl">
+			<div className="container mx-auto max-w-3xl">
 				<div className="text-center mb-8">
 					<h2 className="font-display text-3xl md:text-4xl font-semibold text-ink">
 						What Should We Do Next?
@@ -75,8 +75,15 @@ export default function IdeaBoard() {
 				</div>
 
 				{ideas === undefined ? (
-					<div className="flex justify-center py-10">
-						<div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+					<div
+						className="flex flex-col items-center gap-3 py-10"
+						role="status"
+					>
+						<div
+							className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"
+							aria-hidden="true"
+						/>
+						<p className="text-ink-muted text-lg">Loading ideas…</p>
 					</div>
 				) : ideas.length === 0 ? (
 					<p className="text-ink-muted text-center py-8">
@@ -197,7 +204,10 @@ export default function IdeaBoard() {
 							</Field>
 
 							{status === "error" && (
-								<p className="p-3 rounded-xl bg-danger-soft text-danger text-sm">
+								<p
+									className="p-3 rounded-xl bg-danger-soft text-danger text-base"
+									role="alert"
+								>
 									Something went wrong. Please try again.
 								</p>
 							)}
