@@ -261,7 +261,13 @@ Never assume changes work. After ANY change:
 - Home page uses anchor sections: `#events`, `#calendar`, `#committee`, `#resources`, `#faq`, `#contact`
 
 ### Event → Flyer Pipeline (see README for the full picture)
-One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with QR (`/api/flyer/[eventId]`), flyer page (`/flyer/[eventId]`), auto-email to `FLYER_RECIPIENT_EMAIL` (website-form creation only), and optional gpt-image-2 background art. Hard-won constraints — do not relearn these:
+One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with QR (`/api/flyer/[eventId]`), flyer page (`/flyer/[eventId]`), auto-email to `FLYER_RECIPIENT_EMAIL` (website-form creation only), and an AI poster from gpt-image-2.5-sunburst. Hard-won constraints - do not relearn these:
+
+- **Flyer = AI poster on top + code-drawn footer below. The footer is mandatory.** Top 1275×1200 is the Sunburst poster (or the code-drawn layout if none). Bottom 1275×450 is `HowToFooter` in `flyer.tsx`: QR (level Q, 4-module quiet zone) to `/#events`, three numbered steps, the typed URL, the benefits line. Most residents are older and new to QR codes, so never drop or shrink it, and never let the AI draw a QR (it won't scan). Keep all footer text dark so it survives black-and-white printing.
+- **Posters are proofread before saving** (`app/utils/flyerPoster.ts`): gpt-5.4-mini compares the painted text to `posterLines(event)`; 2 attempts max, then nothing is saved and the route returns 502. Don't loosen this, since a typo'd flyer gets printed and posted.
+- **JPEG = poster, PNG = legacy background art.** `flyer.tsx` picks the layout from the stored file's `Content-Type`. Posters must be uploaded as `image/jpeg` or they render as a faded background behind the code layout.
+- **Changing an event's text clears its poster.** `/api/events` update sets `imageUrl: ""` when title, description, date, time, location or price change, because the old details are painted into the image. Agents editing via Convex directly must do the same, then call `/api/generateFlyerArt` again.
+- **`/api/generateFlyerArt` is public in middleware.** It authenticates itself: a Clerk committee session, or `x-committee-secret` plus a committee `requesterEmail` (Echo). `emailPrinter: true` emails the flyer after the design, and emails the code-drawn flyer if the design failed.
 
 - **Flyer PNG must render on the edge runtime.** `next/og` ImageResponse in the Node runtime breaks on Windows dev (font-path `ERR_INVALID_URL`). Node routes needing the PNG (e.g. sendFlyer) fetch `/api/flyer/[id]` from their own origin with `cache: "no-store"`.
 - **Satori rules** (`app/utils/flyer.tsx`): text nodes must be a single string (template literals, never `{a} · {b}`); component libraries don't render (react-qr-code silently collapses) — the QR is a raw `<svg><path/>` built with `qrcode-generator`; remote images are silently dropped — fetch them yourself and pass the raw ArrayBuffer as `img src`.
@@ -340,8 +346,9 @@ Three anonymous, login-free signals that exist to answer "why did nobody come?".
 | Flyer PNG route | `app/api/flyer/[eventId]/route.ts` |
 | Flyer page | `app/flyer/[eventId]/page.tsx` |
 | Committee event writes (website) | `app/api/events/route.ts` |
-| Flyer email route | `app/api/sendFlyer/route.ts` |
-| Flyer art generation | `app/api/generateFlyerArt/route.ts` |
+| Flyer email route | `app/api/sendFlyer/route.ts` (shared sender: `app/utils/flyerEmail.ts`) |
+| Flyer poster design route | `app/api/generateFlyerArt/route.ts` |
+| Poster prompt, house style, proofreading | `app/utils/flyerPoster.ts` |
 | Stripe checkout session | `app/api/checkout/route.ts` |
 | Payment door pass + receipt | `app/pay/success/page.tsx` |
 | Receipt email template | `app/utils/receiptEmail.ts` |
@@ -383,7 +390,7 @@ Required (never hardcode these):
 - `NEXT_PUBLIC_CONVEX_URL` — Convex client URL
 - SendGrid / Nodemailer credentials (for email reminders)
 - `FLYER_RECIPIENT_EMAIL` — where new-event flyer PNGs are auto-emailed (the committee member who prints them)
-- `OPENAI_API_KEY` — flyer background art generation (gpt-image-2)
+- `OPENAI_API_KEY` - flyer poster design (gpt-image-2.5-sunburst) and proofreading (gpt-5.4-mini)
 - `COMMITTEE_API_SECRET` — gates committee write mutations; must match on Vercel AND both Convex deployments (`npx convex env set COMMITTEE_API_SECRET <v> [--prod]`)
 - `STRIPE_SECRET_KEY` — online event payments (Next.js only; Convex never talks to Stripe). Uses the contextpro.ai Stripe account — NOT the LineCrush account the local Stripe CLI is authed to
 - `CLERK_JWT_ISSUER_DOMAIN` — Convex deployments only; the Clerk instance domain for JWT auth

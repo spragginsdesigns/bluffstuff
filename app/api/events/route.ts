@@ -90,6 +90,22 @@ export async function POST(request: NextRequest) {
 					{ status: 400 }
 				);
 			}
+			const priceCents = sanitizePriceCents(body.priceCents);
+			// An AI poster has the event's text painted into it, so any change
+			// to that text makes it wrong. Clear it ("" = no art) so the flyer
+			// falls back to the code-drawn design until a new poster is made.
+			const current = await convexQuery<Doc<"events"> | null>(
+				"events:getById",
+				{ id }
+			);
+			const posterChanged =
+				!!current?.imageUrl &&
+				((title !== undefined && title !== current.title) ||
+					(description !== undefined && description !== current.description) ||
+					(date !== undefined && date !== current.date) ||
+					(time !== undefined && time !== current.time) ||
+					(location !== undefined && location !== current.location) ||
+					(priceCents !== undefined && priceCents !== (current.priceCents ?? 0)));
 			await convex.mutation(api.events.update, {
 				id: id as Id<"events">,
 				title,
@@ -97,11 +113,15 @@ export async function POST(request: NextRequest) {
 				date,
 				time,
 				location,
-				priceCents: sanitizePriceCents(body.priceCents),
+				priceCents,
+				...(posterChanged ? { imageUrl: "" } : {}),
 				updaterEmail: email,
 				secret
 			});
-			return NextResponse.json({ success: true }, { status: 200 });
+			return NextResponse.json(
+				{ success: true, posterCleared: posterChanged },
+				{ status: 200 }
+			);
 		}
 
 		if (action === "attendance") {

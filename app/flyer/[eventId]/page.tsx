@@ -112,8 +112,9 @@ export default function EventFlyerPage() {
 					{event.title} — Flyer
 				</h1>
 				<p className="text-ink-muted mb-5 max-w-md mx-auto">
-					Print this flyer and post it around the park. The QR code takes
-					residents to the website to see details and RSVP.
+					Print this flyer and post it around the park. The QR code and the
+					steps beside it take residents to the website to see details and
+					RSVP.
 				</p>
 				<div className="flex flex-wrap justify-center gap-3">
 					<Button onClick={() => window.print()} size="lg">
@@ -148,10 +149,10 @@ export default function EventFlyerPage() {
 							disabled={artStatus === "generating"}
 						>
 							{artStatus === "generating"
-								? "Painting… (about a minute)"
+								? "Designing… (about a minute)"
 								: event.imageUrl
-									? "New Background Art"
-									: "Generate Background Art"}
+									? "Redesign Flyer"
+									: "Design Flyer with AI"}
 						</Button>
 					)}
 				</div>
@@ -162,13 +163,14 @@ export default function EventFlyerPage() {
 				)}
 				{artStatus === "error" && (
 					<p className="text-danger text-sm mt-3">
-						Art generation failed — try again in a minute.
+						The AI design didn&apos;t come out right - try again, or print
+						the plain version below.
 					</p>
 				)}
 			</div>
 
 			{/* The flyer PNG — exactly what prints and what gets emailed.
-			    Keyed on imageUrl so it refreshes when background art lands. */}
+			    Keyed on imageUrl so it refreshes when a new design lands. */}
 			{/* eslint-disable-next-line @next/next/no-img-element */}
 			<img
 				key={event.imageUrl ?? "no-art"}

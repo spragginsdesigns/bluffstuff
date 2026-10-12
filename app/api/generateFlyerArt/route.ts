@@ -1,18 +1,40 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { convexQuery } from "@/app/utils/convexServer";
+import { generateFlyerPoster } from "@/app/utils/flyerPoster";
+import {
+	emailFlyerToPrinter,
+	missingFlyerEmailEnv
+} from "@/app/utils/flyerEmail";
 
-// Image generation regularly takes 60-90s
-export const maxDuration = 180;
+// One poster is ~35-60s, plus a proofread; two attempts plus the email
+// can approach three minutes.
+export const maxDuration = 300;
+
+function secretMatches(given: string, expected: string): boolean {
+	const a = Buffer.from(given);
+	const b = Buffer.from(expected);
+	return a.length === b.length && timingSafeEqual(a, b);
+}
 
 /**
- * Generates black-and-white background art for an event flyer with
- * OpenAI's image API, stores it in Convex file storage, and saves the
- * URL on the event. Committee-only; art is generated once per click,
- * not on every flyer render.
+ * Designs the event's flyer poster with gpt-image-2.5-sunburst (see
+ * app/utils/flyerPoster.ts), stores it in Convex file storage, and saves the
+ * URL on the event. The QR/how-to footer is added by the flyer renderer.
+ *
+ * Callers:
+ *  - Committee members on the website (Clerk session + committee role).
+ *  - Trusted agents (Echo) with header `x-committee-secret` and a
+ *    `requesterEmail` that is a committee user. This route is public in
+ *    middleware for that reason, so these two checks ARE the auth.
+ *
+ * `emailPrinter: true` (used right after an event is created) emails the
+ * flyer to the printer afterwards - even if the poster failed, in which case
+ * the code-drawn flyer goes out, so a new event always reaches the printer.
  */
 export async function POST(request: NextRequest) {
 	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -27,108 +49,88 @@ export async function POST(request: NextRequest) {
 		]
 			.filter(Boolean)
 			.join(", ");
-		console.error(`generateFlyerArt misconfigured — missing: ${missing}`);
+		console.error(`generateFlyerArt misconfigured - missing: ${missing}`);
 		return NextResponse.json(
-			{ success: false, error: "Flyer art generation is not configured." },
+			{ success: false, error: "Flyer design is not configured." },
 			{ status: 500 }
 		);
 	}
 
+	let body: { eventId?: unknown; emailPrinter?: unknown; requesterEmail?: unknown };
 	try {
-		const user = await currentUser();
-		const senderEmail = user?.primaryEmailAddress?.emailAddress;
-		if (!senderEmail) {
-			return NextResponse.json(
-				{ success: false, error: "Not signed in." },
-				{ status: 401 }
-			);
-		}
-
-		const convex = new ConvexHttpClient(convexUrl);
-		const convexUser = await convexQuery<Doc<"users"> | null>(
-			"users:getUser",
-			{ email: senderEmail }
+		body = await request.json();
+	} catch {
+		return NextResponse.json(
+			{ success: false, error: "Invalid JSON body." },
+			{ status: 400 }
 		);
-		if (convexUser?.role !== "committee") {
+	}
+
+	const agentSecret = request.headers.get("x-committee-secret");
+	let requesterEmail: string | undefined;
+	if (agentSecret !== null) {
+		if (!secretMatches(agentSecret, secret)) {
 			return NextResponse.json(
-				{ success: false, error: "Committee members only." },
+				{ success: false, error: "Invalid committee secret." },
 				{ status: 403 }
 			);
 		}
+		requesterEmail =
+			typeof body.requesterEmail === "string" ? body.requesterEmail : undefined;
+	} else {
+		const user = await currentUser();
+		requesterEmail = user?.primaryEmailAddress?.emailAddress;
+	}
+	if (!requesterEmail) {
+		return NextResponse.json(
+			{ success: false, error: "Not signed in." },
+			{ status: 401 }
+		);
+	}
 
-		const { eventId } = await request.json();
-		if (!eventId || typeof eventId !== "string") {
-			return NextResponse.json(
-				{ success: false, error: "eventId is required." },
-				{ status: 400 }
-			);
-		}
+	const convexUser = await convexQuery<Doc<"users"> | null>("users:getUser", {
+		email: requesterEmail
+	});
+	if (convexUser?.role !== "committee") {
+		return NextResponse.json(
+			{ success: false, error: "Committee members only." },
+			{ status: 403 }
+		);
+	}
 
-		const event = await convexQuery<Doc<"events"> | null>("events:getById", {
-			id: eventId
-		});
-		if (!event) {
-			return NextResponse.json(
-				{ success: false, error: "Event not found." },
-				{ status: 404 }
-			);
-		}
+	const { eventId } = body;
+	if (!eventId || typeof eventId !== "string") {
+		return NextResponse.json(
+			{ success: false, error: "eventId is required." },
+			{ status: 400 }
+		);
+	}
 
-		// Light monochrome photography reads well behind the solid white
-		// poster boxes and survives black-and-white printing.
-		const prompt = [
-			`A soft, high-key black-and-white photograph to sit behind bold`,
-			`poster typography on a community event flyer.`,
-			`Event: ${event.title}. ${event.description}`,
-			`Light tones, gentle contrast, appetizing and warm subject matter,`,
-			`slightly out of focus. Absolutely no text, letters, words, numbers,`,
-			`logos, or people's faces.`
-		].join(" ");
+	const event = await convexQuery<Doc<"events"> | null>("events:getById", {
+		id: eventId
+	});
+	if (!event) {
+		return NextResponse.json(
+			{ success: false, error: "Event not found." },
+			{ status: 404 }
+		);
+	}
 
-		const genRes = await fetch("https://api.openai.com/v1/images/generations", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${openaiKey}`
-			},
-			body: JSON.stringify({
-				model: "gpt-image-2",
-				prompt,
-				// Near-exact flyer aspect ratio (1275x1650); gpt-image-2 takes
-				// any size in multiples of 16, so cover-crop loss is minimal
-				size: "1216x1568",
-				quality: "medium",
-				n: 1
-			})
-		});
+	let posterError: string | null = null;
+	let attempts = 0;
+	try {
+		const poster = await generateFlyerPoster(event, openaiKey);
+		attempts = poster.attempts;
 
-		if (!genRes.ok) {
-			const errBody = await genRes.text();
-			console.error(`OpenAI image generation failed: ${genRes.status} ${errBody}`);
-			return NextResponse.json(
-				{ success: false, error: "Image generation failed." },
-				{ status: 502 }
-			);
-		}
-
-		const genData = await genRes.json();
-		const b64 = genData?.data?.[0]?.b64_json;
-		if (!b64) {
-			throw new Error("OpenAI response contained no image data");
-		}
-		// Uint8Array, not Buffer: current @types/node Buffer no longer satisfies
-		// fetch's BodyInit, which fails the production type check. Same bytes.
-		const imageBytes = new Uint8Array(Buffer.from(b64, "base64"));
-
-		// Upload into Convex file storage, then save the URL on the event
+		const convex = new ConvexHttpClient(convexUrl);
 		const uploadUrl = await convex.mutation(api.events.generateUploadUrl, {
-			requesterEmail: senderEmail,
+			requesterEmail,
 			secret
 		});
 		const uploadRes = await fetch(uploadUrl, {
 			method: "POST",
-			headers: { "Content-Type": "image/png" },
-			body: imageBytes
+			headers: { "Content-Type": "image/jpeg" },
+			body: poster.jpeg
 		});
 		if (!uploadRes.ok) {
 			throw new Error(`Convex storage upload failed with ${uploadRes.status}`);
@@ -138,16 +140,31 @@ export async function POST(request: NextRequest) {
 		await convex.mutation(api.events.setEventImage, {
 			id: eventId as Id<"events">,
 			storageId,
-			updaterEmail: senderEmail,
+			updaterEmail: requesterEmail,
 			secret
 		});
-
-		return NextResponse.json({ success: true }, { status: 200 });
 	} catch (error) {
-		console.error("Error generating flyer art:", error);
-		return NextResponse.json(
-			{ success: false, error: "Failed to generate flyer art." },
-			{ status: 500 }
-		);
+		console.error("Error designing flyer poster:", error);
+		posterError = "The AI flyer design failed.";
 	}
+
+	let emailed = false;
+	if (body.emailPrinter === true) {
+		const missingEmail = missingFlyerEmailEnv();
+		if (missingEmail.length > 0) {
+			console.error(`Flyer email misconfigured - missing: ${missingEmail.join(", ")}`);
+		} else {
+			try {
+				await emailFlyerToPrinter(event, request.url);
+				emailed = true;
+			} catch (error) {
+				console.error("Error emailing flyer after design:", error);
+			}
+		}
+	}
+
+	return NextResponse.json(
+		{ success: posterError === null, error: posterError, attempts, emailed },
+		{ status: posterError === null ? 200 : 502 }
+	);
 }

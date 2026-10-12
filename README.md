@@ -4,7 +4,7 @@ Community hub for **Woodward Bluffs Mobile Home Park** residents — events, RSV
 
 **Live:** https://bluffstuff.vercel.app
 
-**Stack:** Next.js 14 (App Router) · Clerk (Google SSO) · Convex (real-time DB + file storage) · Stripe (event payments) · Tailwind (design tokens, light/dark themes) · Framer Motion · nodemailer (Gmail) · OpenAI gpt-image-2 (flyer art)
+**Stack:** Next.js 14 (App Router) · Clerk (Google SSO) · Convex (real-time DB + file storage) · Stripe (event payments) · Tailwind (design tokens, light/dark themes) · Framer Motion · nodemailer (Gmail) · OpenAI gpt-image-2.5-sunburst (flyer design) + gpt-5.4-mini (flyer proofreading)
 
 ---
 
@@ -21,17 +21,27 @@ committee enters event (website form or trusted agent)
         ├── website calendar + event cards + RSVP  (instant, real-time)
         ├── print-ready flyer PNG with QR code     (/api/flyer/[eventId])
         ├── flyer page with Print / Download       (/flyer/[eventId])
-        ├── auto-email of the flyer PNG            (to FLYER_RECIPIENT_EMAIL)
-        └── optional AI background art             (gpt-image-2, once per click)
+        ├── AI flyer design, proofread             (gpt-image-2.5-sunburst, on create)
+        └── auto-email of the flyer PNG            (to FLYER_RECIPIENT_EMAIL)
 ```
+
+### Flyer anatomy (US Letter, 1275×1650 PNG)
+
+Every flyer has two parts, and only the top one ever changes:
+
+- **Top (1275×1200): the event design.** `gpt-image-2.5-sunburst` paints a festive poster with the event's exact text in one fixed house style (cream background, thick outlines, deep green / tomato red / orange / gold, dark lettering so it survives black-and-white printing). `gpt-5.4-mini` then proofreads the painted text against the event fields; a miss gets one re-roll, and a second miss saves nothing, so a misspelled poster never reaches the printer. Until a poster exists (or if it failed), a code-drawn layout fills this space. About 7¢ per poster, about 40 seconds.
+- **Bottom (1275×450): the "how to use the website" panel.** Always drawn in code, never by the AI (an AI-drawn QR doesn't scan): a ~2.6-inch QR code (error-correction Q, full quiet zone) to `/#events`, three numbered plain-English steps for residents who've never scanned a code, the address typed out for anyone without a camera, and the benefits line. Identical on every flyer.
+
+The poster's file type is the flag: posters are stored as **JPEG**, older gpt-image-2 background art as **PNG**, and `flyer.tsx` reads the stored `Content-Type` to choose the layout, so no Convex schema change was needed. Editing an event's text, date, time, place or price through the website clears the poster (`imageUrl: ""`), because the old details are painted into it, and starts a redesign.
 
 ### What fires when
 
 | Trigger | What happens |
 |---------|--------------|
-| Event created via the dashboard form | Saved to Convex → flyer PNG rendered → **auto-emailed** to `FLYER_RECIPIENT_EMAIL` with print instructions. Email failure never blocks creation. |
-| Event created via the HTTP API (agent) | Saved to Convex only — **no auto-email**. The agent hands back the flyer link; a committee member clicks "Email to the Printer" on the flyer page. |
-| "Generate Background Art" clicked (flyer page, committee-only) | OpenAI `gpt-image-2` paints a light black-and-white photo texture from the event details (~1 min, once per click — not per render) → stored in Convex file storage → composited behind the poster boxes. Click again to reroll. |
+| Event created via the dashboard form | Saved to Convex → `/api/generateFlyerArt` with `emailPrinter: true` designs and proofreads the AI poster (~1 min) → flyer PNG **auto-emailed** to `FLYER_RECIPIENT_EMAIL`. If the design fails, the code-drawn flyer is emailed instead. Neither blocks creation. |
+| Event edited via the dashboard form | If the text, date, time, place or price changed, the old poster is cleared and a new one is designed (no email). |
+| Event created via the HTTP API (agent) | Saved to Convex only. The agent then calls `/api/generateFlyerArt` with the `x-committee-secret` header (see Routes) to design the poster, verifies the PNG, and hands back the flyer link; "Email to the Printer" stays a committee click. |
+| "Design Flyer with AI" / "Redesign Flyer" clicked (flyer page, committee-only) | Same design + proofread as above, once per click. Click again to reroll. |
 | Event archived | Removed from the public calendar/RSVP. **Note:** the flyer PNG still renders for anyone holding the direct `/api/flyer/<id>` URL — archive hides, it does not delete. |
 | Archived event deleted | `events:remove` — permanent, and **cascades** to that event's RSVPs, feedback and interest taps. Refuses if the event has `payments` rows, since those are a financial record. Offered in the dashboard on archived events only. |
 
@@ -39,12 +49,12 @@ committee enters event (website form or trusted agent)
 
 | Route | Access | Purpose |
 |-------|--------|---------|
-| `/flyer/[eventId]` | Public | Shows the flyer PNG with Print / Download; committee also see "Email to the Printer" and "Generate Background Art" |
+| `/flyer/[eventId]` | Public | Shows the flyer PNG with Print / Download; committee also see "Email to the Printer" and "Design Flyer with AI" |
 | `/api/flyer/[eventId]` | Public | Renders the flyer PNG (edge runtime, `next/og` + satori; Anton/Poppins fonts from `app/fonts/`) |
 | `/api/events` | Clerk + committee role | Website create / update / archive / record attendance — injects the write secret server-side |
 | `/api/sendFlyer` | Clerk + committee role | Emails the flyer PNG to `FLYER_RECIPIENT_EMAIL` via Gmail |
 | `/api/sendReminders` | `CRON_SECRET` bearer | Vercel Cron, daily 9am Pacific — emails everyone who RSVP'd to tomorrow's events. Idempotent via `events.reminderSentAt` |
-| `/api/generateFlyerArt` | Clerk + committee role | gpt-image-2 → Convex storage → `event.imageUrl` |
+| `/api/generateFlyerArt` | Clerk + committee role, **or** header `x-committee-secret: <COMMITTEE_API_SECRET>` plus a committee `requesterEmail` in the body (agents). Public in middleware, so the route does its own auth | Body `{ eventId, emailPrinter?, requesterEmail? }`. Sunburst poster → proofread → Convex storage (JPEG) → `event.imageUrl`. Returns `{ success, attempts, emailed }`; 502 if the poster failed |
 | `/feedback/[eventId]` | **Public, no sign-in** | Post-event feedback — see [The Feedback Loop](#the-feedback-loop) |
 | `/admin` | Clerk + committee role | Committee dashboard (events, turnout, ideas, messages) |
 | `/admin/seed` | Clerk | One-off bootstrap that grants the committee role |
@@ -124,7 +134,7 @@ Never hardcode any of these. Local values live in `.env.local`.
 | `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Local + Vercel | Flyer + reminder + payment-receipt emails |
 | `MAIL_FROM_ADDRESS` | Optional, Vercel | Visible sender if it should differ from `GMAIL_USER`. **Requires a verified Gmail alias first** — see below |
 | `FLYER_RECIPIENT_EMAIL` | Local + Vercel | Who receives new-event flyers (the committee member who prints) |
-| `OPENAI_API_KEY` | Local + Vercel | Flyer background art (gpt-image-2) |
+| `OPENAI_API_KEY` | Local + Vercel | Flyer design (gpt-image-2.5-sunburst) and proofreading (gpt-5.4-mini) |
 | `STRIPE_SECRET_KEY` | Local + Vercel | Event payments (Next.js only; the contextpro.ai account, not LineCrush) |
 | `COMMITTEE_API_SECRET` | Local + Vercel + **both Convex deployments** | Gates committee write mutations |
 | `CRON_SECRET` | Local + Vercel (Production) | Bearer token Vercel Cron sends to `/api/sendReminders`; it is that route's only auth |

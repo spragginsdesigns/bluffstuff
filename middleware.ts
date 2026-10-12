@@ -10,6 +10,9 @@ const isPublicRoute = createRouteMatcher([
 	// Vercel Cron has no Clerk session; the route authenticates the caller
 	// itself with a CRON_SECRET bearer token.
 	"/api/sendReminders",
+	// Trusted agents (Echo) design flyers with the committee secret and no
+	// Clerk session; the route checks Clerk OR that secret itself.
+	"/api/generateFlyerArt",
 	"/pay(.*)",
 	"/api/checkout",
 	"/sign-in(.*)",

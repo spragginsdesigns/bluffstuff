@@ -32,7 +32,7 @@ export default function EventFormModal({
 		"idle" | "submitting" | "success" | "error"
 	>("idle");
 	const [flyerStatus, setFlyerStatus] = useState<
-		"idle" | "sending" | "sent" | "failed"
+		"idle" | "designing" | "redesigning"
 	>("idle");
 	const [errorMessage, setErrorMessage] = useState("");
 
@@ -68,8 +68,19 @@ export default function EventFormModal({
 					const data = await res.json().catch(() => null);
 					throw new Error(data?.error ?? "Failed to update event");
 				}
+				const { posterCleared } = await res.json();
 				setStatus("success");
-				setTimeout(onClose, 1000);
+				if (posterCleared) {
+					// The old AI poster showed the old details; paint a new one.
+					// Not awaited: the flyer updates itself when it lands.
+					setFlyerStatus("redesigning");
+					void fetch("/api/generateFlyerArt", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ eventId: editEvent._id })
+					}).catch(() => undefined);
+				}
+				setTimeout(onClose, posterCleared ? 3000 : 1000);
 			} else {
 				const res = await fetch("/api/events", {
 					method: "POST",
@@ -90,19 +101,17 @@ export default function EventFormModal({
 				}
 				const { eventId: newEventId } = await res.json();
 				setStatus("success");
-				// Auto-email the flyer to the printer; failure never blocks creation
-				setFlyerStatus("sending");
-				try {
-					const res = await fetch("/api/sendFlyer", {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ eventId: newEventId })
-					});
-					setFlyerStatus(res.ok ? "sent" : "failed");
-				} catch {
-					setFlyerStatus("failed");
-				}
-				setTimeout(onClose, 2000);
+				// Design the AI flyer, then email it to the printer. The server
+				// emails the code-drawn flyer if the design fails, so a new event
+				// always reaches the printer. Takes about a minute; not awaited
+				// so the modal can close, and creation never waits on it.
+				setFlyerStatus("designing");
+				void fetch("/api/generateFlyerArt", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ eventId: newEventId, emailPrinter: true })
+				}).catch(() => undefined);
+				setTimeout(onClose, 3000);
 			}
 		} catch (err) {
 			setStatus("error");
@@ -197,20 +206,15 @@ export default function EventFormModal({
 						className="p-3 rounded-lg bg-accent-soft text-accent-strong text-sm"
 					>
 						Event {editEvent ? "updated" : "created"} successfully!
-						{flyerStatus === "sending" && (
+						{flyerStatus === "designing" && (
 							<span className="block mt-1 opacity-80">
-								Emailing the flyer to the printer…
+								Designing the flyer now - it will be emailed to the printer
+								in about a minute.
 							</span>
 						)}
-						{flyerStatus === "sent" && (
+						{flyerStatus === "redesigning" && (
 							<span className="block mt-1 opacity-80">
-								Flyer emailed to the printer ✓
-							</span>
-						)}
-						{flyerStatus === "failed" && (
-							<span className="block mt-1 text-danger">
-								Flyer email didn&apos;t send — use the Flyer button on the
-								event to print or resend it.
+								Redesigning the flyer with the new details - about a minute.
 							</span>
 						)}
 					</motion.div>
