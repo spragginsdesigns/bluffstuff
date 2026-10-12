@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 
 interface ModalProps {
@@ -33,7 +34,10 @@ export default function Modal({
 		};
 	}, []);
 
-	return (
+	// Portal to <body>: a modal opened from inside the navbar inherits its
+	// backdrop-filter containing block, which pins the dialog to the left edge
+	// on desktop instead of centering it.
+	return createPortal(
 		<dialog
 			ref={ref}
 			aria-labelledby={titleId}
@@ -87,6 +91,7 @@ export default function Modal({
 				</div>
 				<div className="p-6">{children}</div>
 			</motion.div>
-		</dialog>
+		</dialog>,
+		document.body
 	);
 }
