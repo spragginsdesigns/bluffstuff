@@ -2,13 +2,13 @@ import { Doc } from "@/convex/_generated/dataModel";
 import { formatFlyerDate } from "./flyer";
 
 /**
- * AI-designed flyer posters: gpt-image-2.5-sunburst paints the top of the
+ * AI-designed flyer posters: gpt-image-2.6-sunburst paints the top of the
  * flyer (art + event text), then a cheap vision model proofreads it before
  * it is saved. The QR / how-to footer is never AI-drawn - `flyer.tsx` renders
  * it in code so it is identical and scannable on every flyer.
  */
 
-const POSTER_MODEL = "gpt-image-2.5-sunburst";
+const POSTER_MODEL = "gpt-image-2.6-sunburst";
 const PROOF_MODEL = "gpt-5.4-mini";
 // Matches the poster slot in flyer.tsx (1275x1200) with almost no crop;
 // gpt-image sizes must be multiples of 16.
@@ -172,6 +172,9 @@ export async function generateFlyerPoster(
 				prompt,
 				size: POSTER_SIZE,
 				quality: "high",
+				// GPT Image 2.6 takes low|medium|high; the flyer prompt is dense
+				// (art plus several exact text lines), so ask for the maximum.
+				complexity: "high",
 				// JPEG keeps the stored file ~400KB; flyer.tsx also uses the
 				// image/jpeg content type to tell posters from legacy PNG art
 				output_format: "jpeg",

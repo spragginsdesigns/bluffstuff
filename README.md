@@ -4,7 +4,7 @@ Community hub for **Woodward Bluffs Mobile Home Park** residents — events, RSV
 
 **Live:** https://bluffstuff.vercel.app
 
-**Stack:** Next.js 14 (App Router) · Clerk (Google SSO) · Convex (real-time DB + file storage) · Stripe (event payments) · Tailwind (design tokens, light/dark themes) · Framer Motion · nodemailer (Gmail) · OpenAI gpt-image-2.5-sunburst (flyer design) + gpt-5.4-mini (flyer proofreading)
+**Stack:** Next.js 14 (App Router) · Clerk (Google SSO) · Convex (real-time DB + file storage) · Stripe (event payments) · Tailwind (design tokens, light/dark themes) · Framer Motion · nodemailer (Gmail) · OpenAI gpt-image-2.6-sunburst (flyer design) + gpt-5.4-mini (flyer proofreading)
 
 ---
 
@@ -33,7 +33,7 @@ committee enters event (website form or trusted agent)
         ├── website calendar + event cards + RSVP  (instant, real-time)
         ├── print-ready flyer PNG with QR code     (/api/flyer/[eventId])
         ├── flyer page with Print / Download       (/flyer/[eventId])
-        ├── AI flyer design, proofread             (gpt-image-2.5-sunburst, on create)
+        ├── AI flyer design, proofread             (gpt-image-2.6-sunburst, on create)
         └── auto-email of the flyer PNG            (to FLYER_RECIPIENT_EMAIL)
 ```
 
@@ -41,7 +41,7 @@ committee enters event (website form or trusted agent)
 
 Every flyer has two parts, and only the top one ever changes:
 
-- **Top (1275×1200): the event design.** `gpt-image-2.5-sunburst` paints a festive poster with the event's exact text in one fixed house style (cream background, thick outlines, deep green / tomato red / orange / gold, dark lettering so it survives black-and-white printing). `gpt-5.4-mini` then proofreads the painted text against the event fields; a miss gets one re-roll, and a second miss saves nothing, so a misspelled poster never reaches the printer. Until a poster exists (or if it failed), a code-drawn layout fills this space. About 7¢ per poster, about 40 seconds.
+- **Top (1275×1200): the event design.** `gpt-image-2.6-sunburst` paints a festive poster with the event's exact text in one fixed house style (cream background, thick outlines, deep green / tomato red / orange / gold, dark lettering so it survives black-and-white printing). `gpt-5.4-mini` then proofreads the painted text against the event fields; a miss gets one re-roll, and a second miss saves nothing, so a misspelled poster never reaches the printer. Until a poster exists (or if it failed), a code-drawn layout fills this space. About 7¢ per poster, about 40 seconds.
 - **Bottom (1275×450): the "how to use the website" panel.** Always drawn in code, never by the AI (an AI-drawn QR doesn't scan): a ~2.6-inch QR code (error-correction Q, full quiet zone) to **that event's own page** (`/events/<id>`), three numbered plain-English steps for residents who've never scanned a code, the address typed out for anyone without a camera, and the benefits line. The layout is identical on every flyer; only the QR target differs. Because the panel is drawn on every render, changing it updates existing flyers without redesigning their posters. Echo's `bluff_event.py verify` decodes the QR and expects exactly `https://bluffstuff.vercel.app/events/<id>`.
 
 The poster's file type is the flag: posters are stored as **JPEG**, older gpt-image-2 background art as **PNG**, and `flyer.tsx` reads the stored `Content-Type` to choose the layout, so no Convex schema change was needed. Editing an event's text, date, time, place or price through the website clears the poster (`imageUrl: ""`), because the old details are painted into it, and starts a redesign.
@@ -147,7 +147,7 @@ Never hardcode any of these. Local values live in `.env.local`.
 | `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Local + Vercel | Flyer + reminder + payment-receipt emails |
 | `MAIL_FROM_ADDRESS` | Optional, Vercel | Visible sender if it should differ from `GMAIL_USER`. **Requires a verified Gmail alias first** — see below |
 | `FLYER_RECIPIENT_EMAIL` | Local + Vercel | Who receives new-event flyers (the committee member who prints) |
-| `OPENAI_API_KEY` | Local + Vercel | Flyer design (gpt-image-2.5-sunburst) and proofreading (gpt-5.4-mini) |
+| `OPENAI_API_KEY` | Local + Vercel | Flyer design (gpt-image-2.6-sunburst) and proofreading (gpt-5.4-mini) |
 | `STRIPE_SECRET_KEY` | Local + Vercel | Event payments (Next.js only; the contextpro.ai account, not LineCrush) |
 | `COMMITTEE_API_SECRET` | Local + Vercel + **both Convex deployments** | Gates committee write mutations |
 | `CRON_SECRET` | Local + Vercel (Production) | Bearer token Vercel Cron sends to `/api/sendReminders`; it is that route's only auth |

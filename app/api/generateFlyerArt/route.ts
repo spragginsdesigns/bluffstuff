@@ -22,7 +22,7 @@ function secretMatches(given: string, expected: string): boolean {
 }
 
 /**
- * Designs the event's flyer poster with gpt-image-2.5-sunburst (see
+ * Designs the event's flyer poster with gpt-image-2.6-sunburst (see
  * app/utils/flyerPoster.ts), stores it in Convex file storage, and saves the
  * URL on the event. The QR/how-to footer is added by the flyer renderer.
  *

@@ -276,7 +276,7 @@ Never assume changes work. After ANY change:
 - Home page uses anchor sections: `#events`, `#calendar`, `#committee`, `#resources`, `#faq`, `#contact`
 
 ### Event → Flyer Pipeline (see README for the full picture)
-One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with QR (`/api/flyer/[eventId]`), flyer page (`/flyer/[eventId]`), auto-email to `FLYER_RECIPIENT_EMAIL` (website-form creation only), and an AI poster from gpt-image-2.5-sunburst. Hard-won constraints - do not relearn these:
+One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with QR (`/api/flyer/[eventId]`), flyer page (`/flyer/[eventId]`), auto-email to `FLYER_RECIPIENT_EMAIL` (website-form creation only), and an AI poster from gpt-image-2.6-sunburst (sent `complexity: "high"` in `flyerPoster.ts`). Hard-won constraints - do not relearn these:
 
 - **Flyer = AI poster on top + code-drawn footer below. The footer is mandatory.** Top 1275×1200 is the Sunburst poster (or the code-drawn layout if none). Bottom 1275×450 is `HowToFooter` in `flyer.tsx`: QR (level Q, 4-module quiet zone) to **`/events/<id>`** (that event's page; Echo's `bluff_event.py` verify expects exactly this, so change both together), three numbered steps, the typed URL, the benefits line. Most residents are older and new to QR codes, so never drop or shrink it, and never let the AI draw a QR (it won't scan). Keep all footer text dark so it survives black-and-white printing.
 - **Posters are proofread before saving** (`app/utils/flyerPoster.ts`): gpt-5.4-mini compares the painted text to `posterLines(event)`; 2 attempts max, then nothing is saved and the route returns 502. Don't loosen this, since a typo'd flyer gets printed and posted.
@@ -422,7 +422,7 @@ Required (never hardcode these):
 - `NEXT_PUBLIC_CONVEX_URL` — Convex client URL
 - SendGrid / Nodemailer credentials (for email reminders)
 - `FLYER_RECIPIENT_EMAIL` — where new-event flyer PNGs are auto-emailed (the committee member who prints them)
-- `OPENAI_API_KEY` - flyer poster design (gpt-image-2.5-sunburst) and proofreading (gpt-5.4-mini)
+- `OPENAI_API_KEY` - flyer poster design (gpt-image-2.6-sunburst) and proofreading (gpt-5.4-mini)
 - `COMMITTEE_API_SECRET` — gates committee write mutations; must match on Vercel AND both Convex deployments (`npx convex env set COMMITTEE_API_SECRET <v> [--prod]`)
 - `STRIPE_SECRET_KEY` — online event payments (Next.js only; Convex never talks to Stripe). Uses the contextpro.ai Stripe account — NOT the LineCrush account the local Stripe CLI is authed to
 - `CLERK_JWT_ISSUER_DOMAIN` — Convex deployments only; the Clerk instance domain for JWT auth
