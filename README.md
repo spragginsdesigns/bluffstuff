@@ -128,7 +128,7 @@ Events can carry a price (`events.priceCents`); priced events get a **"Pay Onlin
 
 Two things not to relearn:
 
-- **Stripe account:** the **contextpro.ai** account (`acct_1HHugpHGDQRligtc`), *not* the LineCrush account the local Stripe CLI is authenticated to. Never use CLI keys for BluffStuff — use `STRIPE_SECRET_KEY` (the `bluffstuff-website` key).
+- **Stripe account:** the **contextpro.ai** account, *not* the LineCrush account the local Stripe CLI is authenticated to. Never use CLI keys for BluffStuff — use `STRIPE_SECRET_KEY` (the `bluffstuff-website` key).
 - **The receipt email reuses the flyer Gmail transport** (`GMAIL_USER` / `GMAIL_APP_PASSWORD`) — no separate email provider.
 
 Full flow, security guardrails, the `payments` table, at-door setup, and how to test for free: **[`Docs/payments.md`](Docs/payments.md)**.
