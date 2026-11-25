@@ -19,9 +19,9 @@ Both run through the **same Stripe account**, so every payment — online or at 
 
 ## The Stripe account (read this first)
 
-Payments use Austin's **contextpro.ai** Stripe account (`acct_1HHugpHGDQRligtc`), repurposed for Woodward Bluffs — it was dormant with zero lifetime volume, and a brand-new account couldn't be verified fast enough for the first event.
+Payments use Austin's **contextpro.ai** Stripe account, repurposed for Woodward Bluffs — it was dormant with zero lifetime volume, and a brand-new account couldn't be verified fast enough for the first event.
 
-> ⚠️ **This is NOT the LineCrush account.** The Stripe CLI on Austin's machine is authenticated to a *different* account (`acct_1PqVboRsZ8UQNeKt`, LineCrush). **Never use CLI keys or `stripe` CLI commands for BluffStuff** — always use `STRIPE_SECRET_KEY` from `.env.local` / Vercel, which is the contextpro.ai key named `bluffstuff-website`.
+> ⚠️ **This is NOT the LineCrush account.** The Stripe CLI on Austin's machine is authenticated to a *different* account. **Never use CLI keys or `stripe` CLI commands for BluffStuff** — always use `STRIPE_SECRET_KEY` from `.env.local` / Vercel, which is the contextpro.ai key named `bluffstuff-website`.
 
 The public business name shown on the Checkout page and card statements is **"Woodward Bluffs Activities Committee"** (Stripe Dashboard → Settings → Business → Public details).
 

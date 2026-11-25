@@ -298,7 +298,7 @@ One event entry fans out to: website calendar/RSVP, print-ready flyer PNG with Q
 ### Payments (Stripe) — full reference in `Docs/payments.md`
 Priced events (`events.priceCents`, dollars in the form → cents in the DB) get a "Pay Online" button → Stripe Checkout → `/pay/success` renders a door pass and emails a matching receipt. At-door cards go through Stripe Tap to Pay on a committee phone. Hard-won constraints:
 
-- **Wrong Stripe account = disaster.** BluffStuff uses the **contextpro.ai** account (`acct_1HHugpHGDQRligtc`), NOT the LineCrush account the local `stripe` CLI is authed to. Never run `stripe` CLI commands or use CLI keys here — use `STRIPE_SECRET_KEY` (the `bluffstuff-website` key) only.
+- **Wrong Stripe account = disaster.** BluffStuff uses the **contextpro.ai** account, NOT the LineCrush account the local `stripe` CLI is authed to. Never run `stripe` CLI commands or use CLI keys here — use `STRIPE_SECRET_KEY` (the `bluffstuff-website` key) only.
 - **Amount is read server-side.** `/api/checkout` looks up `event.priceCents` from Convex — never trusts a client-supplied price.
 - **The success page IS the proof.** It re-fetches the session from Stripe with the secret key and only shows "You're paid!" for a verified-paid session (accepts `paid` AND `no_payment_required` for $0 promos). That's why the screen/email is trustworthy at the door.
 - **Recording + email are idempotent.** `payments:record` keys on the Stripe session id and returns `{ id, alreadyRecorded }`; the receipt email fires only when `alreadyRecorded` is false, so refreshes don't duplicate.
